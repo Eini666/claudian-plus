@@ -140,6 +140,8 @@ Pasek limitów działa bez niego.
 - Node 24 do zbudowania wtyczki
 - Głosówki: Windows x64
 
+Dodatki Claudian Plus są testowane tylko na Windows; funkcje głosowe wymagają Windows x64.
+
 ## Licencja
 
 MIT — jak oryginał. Patrz [`LICENSE`](LICENSE). Kod zewnętrzny w `src/vendor/` ma własne licencje

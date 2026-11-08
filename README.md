@@ -147,6 +147,8 @@ The limits bar works without it.
 - Node 24 to build the plugin
 - Voice messages: Windows x64
 
+Claudian Plus additions are tested on Windows only; voice features require Windows x64.
+
 ## License
 
 MIT — like the original. See [`LICENSE`](LICENSE). Third-party code in `src/vendor/` has its own
