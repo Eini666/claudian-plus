@@ -178,6 +178,8 @@ export interface ClaudianSettings {
   accountSwitcherEnabled: boolean;
   /** Adres panelu kont. */
   accountsPanelUrl: string;
+  /** Wtyczka sama zapisuje i uruchamia panel kont (tylko dla adresu lokalnego). */
+  accountsPanelManaged: boolean;
   /** Most Telegrama; wylaczony = brak UI i odpytywania. */
   telegramBridgeEnabled: boolean;
   /** `builtin` = bot we wtyczce, `external` = zewnetrzny program pisze do folderu mostu. */

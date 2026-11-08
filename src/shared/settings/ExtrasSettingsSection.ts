@@ -1,15 +1,17 @@
-import { Notice, Setting } from 'obsidian';
+import { type ButtonComponent, Notice, Setting } from 'obsidian';
 
 import {
   type ClaudianSettings,
   DEFAULT_ASSISTANT_NAME,
   resolveAssistantName,
 } from '../../core/types/settings';
+import type { AccountsPanelHost, StanPanelu } from '../../features/accounts/AccountsPanelHost';
 import { t } from '../../i18n/i18n';
 import { renderTelegramSettingsSection, type TelegramPanelPort } from './TelegramSettingsSection';
 
 interface ExtrasSettingsHost {
   readonly settings: ClaudianSettings;
+  readonly accountsPanel: Pick<AccountsPanelHost, 'stan' | 'naZmiane' | 'restart'>;
   mutateSettings(mutation: (settings: ClaudianSettings) => void | Promise<void>): Promise<void>;
 }
 
@@ -25,6 +27,20 @@ function isPanelUrl(value: string): boolean {
   return /^https?:\/\/\S+$/i.test(value.trim());
 }
 
+function statusText(stan: StanPanelu, powod: string): string {
+  switch (stan) {
+    case 'nasz': return t('settings.extras.accountsPanel.status.nasz');
+    case 'obcy': return t('settings.extras.accountsPanel.status.obcy');
+    case 'wylaczony': return t('settings.extras.accountsPanel.status.wylaczony');
+    case 'blad': return t('settings.extras.accountsPanel.status.blad', { reason: powod });
+    case 'brak-node': return t('settings.extras.accountsPanel.status.brakNode');
+    case 'nielokalny': return t('settings.extras.accountsPanel.status.nielokalny');
+  }
+}
+
+/** Sekcja jest przebudowywana przy kazdym otwarciu ustawien — nowy render odpina poprzedniego sluchacza. */
+let unsubscribeStatus: (() => void) | null = null;
+
 export function renderExtrasSettingsSection(options: ExtrasSettingsSectionOptions): void {
   const { container, plugin, onDesktopAvatarChange, telegram } = options;
 
@@ -34,6 +50,8 @@ export function renderExtrasSettingsSection(options: ExtrasSettingsSectionOption
   const body = container.createDiv({ cls: 'claudian-extras-settings' });
 
   const render = (): void => {
+    unsubscribeStatus?.();
+    unsubscribeStatus = null;
     body.empty();
     const settings = plugin.settings;
 
@@ -98,6 +116,44 @@ export function renderExtrasSettingsSection(options: ExtrasSettingsSectionOption
             void save((s) => { s.accountsPanelUrl = value; });
           });
         });
+
+      // mutateSettings sam woła accountsPanel.odswiez()
+      new Setting(body)
+        .setName(t('settings.extras.accountsPanel.managed.name'))
+        .setDesc(t('settings.extras.accountsPanel.managed.desc'))
+        .addToggle((toggle) => {
+          toggle
+            .setValue(settings.accountsPanelManaged)
+            .onChange((value) => save((s) => { s.accountsPanelManaged = value; }, true));
+        });
+
+      const panel = plugin.accountsPanel;
+      let restartButton: ButtonComponent | null = null;
+      const statusSetting = new Setting(body)
+        .setName(t('settings.extras.accountsPanel.status.name'))
+        .addButton((button) => {
+          button
+            .setButtonText(t('settings.extras.accountsPanel.open'))
+            .onClick(() => { window.open(plugin.settings.accountsPanelUrl); });
+        })
+        .addButton((button) => {
+          restartButton = button;
+          button
+            .setButtonText(t('settings.extras.accountsPanel.restart'))
+            .onClick(async () => {
+              button.setDisabled(true);
+              await panel.restart();
+              // Ten sam stan po restarcie nie wywola zdarzenia — odblokuj przycisk recznie
+              showStatus(panel.stan.stan, panel.stan.powod);
+            });
+        });
+
+      const showStatus = (stan: StanPanelu, powod: string): void => {
+        statusSetting.setDesc(statusText(stan, powod));
+        restartButton?.setDisabled(!plugin.settings.accountsPanelManaged || (stan !== 'nasz' && stan !== 'blad'));
+      };
+      showStatus(panel.stan.stan, panel.stan.powod);
+      unsubscribeStatus = panel.naZmiane(showStatus);
     }
 
     new Setting(body)

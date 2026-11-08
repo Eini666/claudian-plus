@@ -1,5 +1,6 @@
 import { DEFAULT_CLAUDIAN_SETTINGS } from '@/app/settings/defaultSettings';
 import type { ClaudianSettings } from '@/core/types/settings';
+import type { StanPanelu } from '@/features/accounts/AccountsPanelHost';
 import { renderExtrasSettingsSection } from '@/shared/settings/ExtrasSettingsSection';
 
 const mockRendered: string[] = [];
@@ -10,8 +11,12 @@ const mockTexts = new Map<string, {
   setValue: jest.Mock;
 }>();
 const mockNotice = jest.fn();
+const mockDescs = new Map<string, string>();
+const mockButtons = new Map<string, { onClick: () => Promise<void> | void; disabled: boolean }>();
 
-jest.mock('@/i18n/i18n', () => ({ t: (key: string) => key }));
+jest.mock('@/i18n/i18n', () => ({
+  t: (key: string, params?: Record<string, string>) => (params ? `${key} ${JSON.stringify(params)}` : key),
+}));
 
 jest.mock('obsidian', () => ({
   Notice: class {
@@ -27,7 +32,10 @@ jest.mock('obsidian', () => ({
       mockRendered.push(name);
       return this;
     }
-    setDesc() { return this; }
+    setDesc(desc: string) {
+      mockDescs.set(this.name, desc);
+      return this;
+    }
     setHeading() { return this; }
     addToggle(cb: (toggle: unknown) => void) {
       const toggle = {
@@ -46,7 +54,12 @@ jest.mock('obsidian', () => ({
       return this;
     }
     addButton(cb: (button: unknown) => void) {
-      const button = { setButtonText: () => button, setDisabled: () => button, onClick: () => button };
+      const entry = { onClick: (): Promise<void> | void => undefined, disabled: false };
+      const button = {
+        setButtonText: (text: string) => { mockButtons.set(text, entry); return button; },
+        setDisabled: (disabled: boolean) => { entry.disabled = disabled; return button; },
+        onClick: (handler: () => Promise<void> | void) => { entry.onClick = handler; return button; },
+      };
       cb(button);
       return this;
     }
@@ -77,9 +90,27 @@ function setup(overrides: Partial<ClaudianSettings> = {}) {
   mockToggles.clear();
   mockTexts.clear();
   mockNotice.mockClear();
+  mockDescs.clear();
+  mockButtons.clear();
   const settings = { ...DEFAULT_CLAUDIAN_SETTINGS, ...overrides } as ClaudianSettings;
+  const listeners = new Set<(stan: StanPanelu, powod: string) => void>();
+  const panelState: { stan: StanPanelu; powod: string } = { stan: 'wylaczony', powod: '' };
+  const emit = (stan: StanPanelu, powod = ''): void => {
+    panelState.stan = stan;
+    panelState.powod = powod;
+    for (const cb of listeners) cb(stan, powod);
+  };
+  const accountsPanel = {
+    get stan() { return { ...panelState }; },
+    naZmiane: (cb: (stan: StanPanelu, powod: string) => void) => {
+      listeners.add(cb);
+      return () => { listeners.delete(cb); };
+    },
+    restart: jest.fn(async () => { emit('nasz'); }),
+  };
   const plugin = {
     settings,
+    accountsPanel,
     mutateSettings: jest.fn(async (mutation: (s: ClaudianSettings) => void) => { mutation(settings); }),
   };
   const body = {
@@ -107,7 +138,7 @@ function setup(overrides: Partial<ClaudianSettings> = {}) {
     removeFile: jest.fn(),
   };
   renderExtrasSettingsSection({ container, plugin, onDesktopAvatarChange, telegram });
-  return { settings, plugin, onDesktopAvatarChange };
+  return { settings, plugin, onDesktopAvatarChange, emit, listeners };
 }
 
 describe('renderExtrasSettingsSection', () => {
@@ -155,5 +186,46 @@ describe('renderExtrasSettingsSection', () => {
     await mockToggles.get('settings.extras.showAriWidget.name')!(true);
     expect(settings.showAriWidget).toBe(true);
     expect(onDesktopAvatarChange).toHaveBeenCalledWith(true);
+  });
+
+  it('shows the panel status and updates it on host events', () => {
+    const { emit } = setup({ accountSwitcherEnabled: true });
+    const status = 'settings.extras.accountsPanel.status.name';
+    const restart = mockButtons.get('settings.extras.accountsPanel.restart')!;
+    expect(mockDescs.get(status)).toBe('settings.extras.accountsPanel.status.wylaczony');
+    expect(restart.disabled).toBe(true);
+
+    emit('blad', 'port zajęty');
+    expect(mockDescs.get(status)).toBe('settings.extras.accountsPanel.status.blad {"reason":"port zajęty"}');
+    expect(restart.disabled).toBe(false);
+
+    emit('obcy');
+    expect(mockDescs.get(status)).toBe('settings.extras.accountsPanel.status.obcy');
+    expect(restart.disabled).toBe(true);
+  });
+
+  it('restarts the panel and keeps a single status listener across rerenders', async () => {
+    const { plugin, emit, listeners } = setup({ accountSwitcherEnabled: true });
+    emit('nasz');
+    await mockButtons.get('settings.extras.accountsPanel.restart')!.onClick();
+    expect(plugin.accountsPanel.restart).toHaveBeenCalledTimes(1);
+
+    await mockToggles.get('settings.extras.accountsPanel.managed.name')!(false);
+    expect(plugin.settings.accountsPanelManaged).toBe(false);
+    expect(listeners.size).toBe(1);
+    expect(mockButtons.get('settings.extras.accountsPanel.restart')!.disabled).toBe(true);
+  });
+
+  it('opens the panel URL', () => {
+    setup({ accountSwitcherEnabled: true });
+    const open = jest.fn();
+    const previous = (globalThis as { window?: unknown }).window;
+    (globalThis as { window?: unknown }).window = { open };
+    try {
+      void mockButtons.get('settings.extras.accountsPanel.open')!.onClick();
+      expect(open).toHaveBeenCalledWith('http://127.0.0.1:7788');
+    } finally {
+      (globalThis as { window?: unknown }).window = previous;
+    }
   });
 });

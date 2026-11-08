@@ -137,8 +137,64 @@ instructions — if you want them, your program can adopt the same layout.
 
 ## Claude account switcher
 
-Off by default. Requires a local accounts panel at the address from settings (panel in preparation).
-The limits bar works without it.
+For people with several Claude accounts (e.g. personal and work). Switch accounts with one click in
+the bar, without `claude auth logout` / `login`, and see the 5h and 7d usage of every account — also
+the ones you are not on right now. Off by default. The limits bar works without it.
+
+### Setup
+
+1. *Settings → Claudian Plus → Extras* → enable **"Account switcher"**.
+2. Leave **"Start the accounts panel"** on. The plugin writes a local accounts panel to
+   `~/.claudian-plus/accounts/` and starts it with Obsidian (at `http://127.0.0.1:7788`).
+   The panel needs **Node.js 20.11 or newer** on PATH; without it "Panel status" shows "Node.js not found".
+3. **"Open panel"** → **"Zapisz bieżące konto"** ("Save current account") — the account Claude Code
+   is logged in to right now.
+4. **"Dodaj konto"** ("Add account") for each additional one: enter a name (e.g. `work`), open the
+   link **in a private browser window** (Ctrl+Shift+N), log in to that account, copy the code from the
+   page and paste it into the panel. A normal window would approve the account already open on claude.ai.
+5. Reopen the chat tab — an account badge with a switch menu appears next to the limits bar.
+
+**Do not use `claude auth logout` to add accounts** — logging out can invalidate the token of the
+account the panel has just saved.
+
+### Day to day
+
+- **Switching** — the badge in the bar or the "przełącz" button in the panel. The menu shows each
+  account's usage. In a long conversation it also shows the switch cost: the prompt cache is separate
+  per account, so the new account writes the whole context again (about 12.5× the price of a cache
+  read). With a very large context, starting a new conversation is cheaper.
+- **Auto-switch** (enabled in the panel, off by default) — when the active account goes above 90% of a
+  limit, the panel switches to the least used account below the threshold. It waits instead when the
+  5h window resets within minutes. Change the threshold in `~/.claude/accounts/.autoswitch.json`.
+- **"zaloguj ponownie"** ("log in again") — a login lives about 4 weeks from logging in. When it
+  expires, the panel shows the button and walks you through the same private window + code.
+- The panel runs while Obsidian runs. Want it always on, also for the plain CLI? Turn off
+  "Start the accounts panel" and add a logon task (Windows, PowerShell):
+
+```powershell
+$dir = "$env:USERPROFILE\.claudian-plus\accounts"
+$action = New-ScheduledTaskAction -Execute 'C:\Program Files\nodejs\node.exe' `
+  -Argument 'accounts.mjs serve 7788' -WorkingDirectory $dir
+$trigger = New-ScheduledTaskTrigger -AtLogOn -User $env:USERNAME
+Register-ScheduledTask -TaskName 'Claude Code accounts' -Action $action -Trigger $trigger
+```
+
+### Security
+
+- `~/.claude/accounts/` holds **plain-text login tokens** of every account. Treat it like a password:
+  keep it out of repositories, sync and unencrypted cloud backups.
+- The panel listens on `127.0.0.1` only and rejects requests from pages other than the panel itself
+  and Obsidian. The browser gets e-mail addresses and percentages; tokens never leave the panel.
+- Before every switch the panel backs up the login files to `~/.claude/accounts/.backup/`.
+- This is a tool for **your own** accounts that you pay for, not for getting around limits.
+
+### Limitations
+
+- Windows: tested. Linux: should work, untested. **macOS: does not work** — Claude Code keeps the
+  login in the Keychain there, not in a file.
+- The panel UI is in Polish only.
+- An expired token returns `429`, not `401` — if the panel says the token expired, log the account in again.
+- The usage endpoint is strictly rate-limited; the panel caches readings and only asks while it is visible.
 
 ## Requirements
 
@@ -146,6 +202,7 @@ The limits bar works without it.
 - [Claude Code CLI](https://docs.claude.com/en/docs/claude-code) installed and logged in
 - Node 24 to build the plugin
 - Voice messages: Windows x64
+- Account switcher: Node.js 20.11+ on PATH, Windows (Linux untested, macOS no)
 
 Claudian Plus additions are tested on Windows only; voice features require Windows x64.
 

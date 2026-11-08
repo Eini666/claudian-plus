@@ -3,8 +3,10 @@ import {
   describePanelUsage,
   describeSwitchCost,
   fetchPanelAccounts,
+  fetchPanelHealth,
   type PanelAccount,
   panelUsageToPlanLimits,
+  stopPanel,
   switchPanelAccount,
 } from '@/utils/accountsPanel';
 
@@ -90,6 +92,31 @@ describe('accountsPanel', () => {
         'http://127.0.0.1:7788/api/switch',
         expect.objectContaining({ method: 'POST', body: JSON.stringify({ name: 'zz', source: 'claudian' }) }),
       );
+    });
+
+    it('fetchPanelHealth: nasz JSON → obiekt, 404 i inny JSON → obcy, blad sieci → null', async () => {
+      global.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => ({ app: 'claudian-plus-accounts', version: 1 }) }) as any;
+      await expect(fetchPanelHealth(PANEL)).resolves.toEqual({ app: 'claudian-plus-accounts', version: 1 });
+
+      global.fetch = jest.fn().mockResolvedValue({ ok: false, status: 404, json: async () => ({}) }) as any;
+      await expect(fetchPanelHealth(PANEL)).resolves.toBe('obcy');
+
+      global.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => [{ name: 'a' }] }) as any;
+      await expect(fetchPanelHealth(PANEL)).resolves.toBe('obcy');
+
+      global.fetch = jest.fn().mockRejectedValue(new Error('ECONNREFUSED')) as any;
+      await expect(fetchPanelHealth(PANEL)).resolves.toBeNull();
+    });
+
+    it('stopPanel wysyla POST /api/shutdown bez Content-Type', async () => {
+      const fetchMock = jest.fn().mockResolvedValue({ ok: true });
+      global.fetch = fetchMock as any;
+
+      await expect(stopPanel(PANEL)).resolves.toBe(true);
+      const [url, init] = fetchMock.mock.calls[0];
+      expect(url).toBe('http://127.0.0.1:7788/api/shutdown');
+      expect(init.method).toBe('POST');
+      expect(init.headers).toBeUndefined();
     });
   });
 });

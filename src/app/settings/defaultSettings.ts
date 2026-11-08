@@ -38,6 +38,7 @@ export const DEFAULT_CLAUDIAN_SETTINGS: ClaudianSettings = {
   showAvatarBadge: true,
   accountSwitcherEnabled: false,
   accountsPanelUrl: 'http://127.0.0.1:7788',
+  accountsPanelManaged: true,
   telegramBridgeEnabled: false,
   telegramBridgeMode: 'builtin',
   telegramBridgeDir: '',

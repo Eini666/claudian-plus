@@ -47,6 +47,49 @@ export async function fetchPanelAccounts(baseUrl: string): Promise<PanelAccount[
   }
 }
 
+/** Lustro `PANEL_APP_ID` z `tools/accounts/accounts.mjs` — zmiana tam wymaga zmiany tu. */
+export const PANEL_APP_ID = 'claudian-plus-accounts';
+
+export interface PanelHealth {
+  app: string;
+  version: number;
+}
+
+/**
+ * Nasz panel → `{app, version}`; odpowiada cos innego (404, inny JSON — np. panel uruchomiony
+ * poza wtyczka) → `'obcy'`; nic nie slucha albo timeout → `null`.
+ */
+export async function fetchPanelHealth(baseUrl: string): Promise<PanelHealth | 'obcy' | null> {
+  let res: Response;
+  try {
+    res = await fetch(endpoint(baseUrl, '/api/health'), { signal: AbortSignal.timeout(TIMEOUT_MS) });
+  } catch {
+    return null;
+  }
+  if (!res.ok) return 'obcy';
+  try {
+    const data = await res.json() as Partial<PanelHealth> | null;
+    return data?.app === PANEL_APP_ID && typeof data.version === 'number'
+      ? { app: data.app, version: data.version }
+      : 'obcy';
+  } catch {
+    return 'obcy';
+  }
+}
+
+/** Zatrzymanie naszego panelu; bez Content-Type z tego samego powodu co `/api/switch`. Nie rzuca. */
+export async function stopPanel(baseUrl: string): Promise<boolean> {
+  try {
+    const res = await fetch(endpoint(baseUrl, '/api/shutdown'), {
+      method: 'POST',
+      signal: AbortSignal.timeout(TIMEOUT_MS),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
 /** Rzuca z komunikatem panelu, zeby Notice powiedzial, CO poszlo nie tak. */
 export async function switchPanelAccount(baseUrl: string, name: string): Promise<void> {
   const res = await fetch(endpoint(baseUrl, '/api/switch'), {

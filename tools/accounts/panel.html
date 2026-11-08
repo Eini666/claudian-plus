@@ -1,0 +1,539 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Konta Claude Code</title>
+<style>
+  :root {
+    --accent: #8BC34A;
+    --accent-soft: rgba(139,195,74,.14);
+    --accent-line: rgba(139,195,74,.35);
+    --bg: #0A0A0A;
+    --card: #181818;
+    --input: #1c1c1c;
+    --hairline: #202020;
+    --hairline-2: #FFFFFF14;
+    --text: #F2F2F2;
+    --dim: #9a9a9a;
+    --mute: #949494;
+    --green: #3A693B;
+    --red: #ff5c5c;
+    --amber: #ff9838;
+    --r-md: 10px;
+    --r-lg: 14px;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 18px;
+    background: var(--bg); color: var(--text);
+    font: 14px/1.5 Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+
+  .toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+  .toolbar-title {
+    font-family: Outfit, Inter, sans-serif; font-weight: 700; font-size: 18px;
+    margin: 0; display: flex; align-items: center; gap: 10px;
+  }
+  .stamp { color: var(--mute); font-size: 12px; font-weight: 400; }
+  .models { font: 400 11.5px/1.4 Inter, system-ui, sans-serif; color: var(--mute); }
+  .models b { color: var(--accent); font-weight: 600; }
+  .models .sep { color: var(--hairline); margin: 0 7px; }
+  .models i { font-style: normal; color: #6b6b6b; }
+  /* przelacznik auto-switcha; label opakowuje input, wiec klik w napis tez dziala */
+  .auto { display: flex; align-items: center; gap: 7px; cursor: pointer;
+          user-select: none; font-size: 12.5px; color: var(--mute); }
+  .auto input { position: absolute; opacity: 0; width: 0; height: 0; }
+  .auto .sw {
+    width: 32px; height: 18px; flex: none; position: relative;
+    background: var(--input); border: 1px solid var(--hairline-2);
+    border-radius: 999px; transition: background .2s, border-color .2s;
+  }
+  .auto .sw::after {
+    content: ''; position: absolute; top: 2px; left: 2px; width: 12px; height: 12px;
+    border-radius: 50%; background: var(--mute); transition: left .2s, background .2s;
+  }
+  .auto input:checked + .sw { background: var(--accent-soft); border-color: var(--accent-line); }
+  .auto input:checked + .sw::after { left: 16px; background: var(--accent); }
+  .auto input:checked ~ .lbl { color: var(--accent); }
+  /* serve --no-auto: zegar nie chodzi, wiec przelacznik nie ma czego wlaczyc */
+  .auto.off { opacity: .45; cursor: not-allowed; }
+
+  .btn {
+    padding: 7px 12px; font-size: 12.5px; font-family: inherit;
+    background: var(--input); color: var(--text);
+    border: 1px solid var(--hairline-2); border-radius: var(--r-md); cursor: pointer;
+  }
+  .btn:hover { border-color: var(--accent-line); }
+
+  .warn {
+    display: none; align-items: center; gap: 6px;
+    background: rgba(255,152,56,.09); color: var(--amber);
+    border: 1px solid rgba(255,152,56,.28); border-radius: 9px;
+    padding: 7px 12px; margin-bottom: 12px;
+    font: 600 12px/1.4 Inter, system-ui, sans-serif;
+  }
+
+  .grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+  .acc {
+    background: #000; border: 1px solid var(--hairline);
+    border-radius: var(--r-lg); padding: 14px 16px;
+  }
+  /* aktywne konto wyroznia sama ramka - zielone tlo bilo po oczach */
+  .acc.active { border-color: var(--accent); box-shadow: 0 0 0 1px rgba(139,195,74,.22); }
+
+  .head { display: flex; align-items: center; gap: 8px; margin-bottom: 2px; }
+  .nm { font-weight: 650; font-size: 15px; }
+  .tag {
+    font: 700 10px/1 Inter, sans-serif; letter-spacing: .04em; text-transform: uppercase;
+    padding: 4px 7px; border-radius: 999px; background: var(--accent); color: #0A0A0A;
+  }
+  .mail { color: var(--mute); font-size: 12px; margin-bottom: 12px; word-break: break-all; }
+
+  .row { display: flex; justify-content: space-between; font-size: 11.5px; margin-bottom: 4px; }
+  .row .l { color: var(--dim); }
+  .row .l b { color: var(--text); font-variant-numeric: tabular-nums; }
+  .row .r { color: var(--mute); }
+  .track { height: 6px; background: #303030; border-radius: 4px; overflow: hidden; margin-bottom: 10px; }
+  .foot {
+    display: flex; justify-content: space-between; gap: 8px;
+    margin: 10px 0 2px; padding-top: 9px; border-top: 1px solid var(--hairline);
+    font-size: 11px; color: var(--mute);
+  }
+  .foot .stale { color: var(--amber); }
+  .foot .out { color: var(--red); font-weight: 600; }
+  .fill { height: 100%; background: var(--accent); border-radius: 4px; transition: width .3s ease; }
+  .fill.mid { background: var(--amber); }
+  .fill.hot { background: var(--red); }
+
+  .go {
+    width: 100%; margin-top: 2px; padding: 8px;
+    font: 600 12.5px/1 Inter, sans-serif;
+    background: var(--accent-soft); color: var(--accent);
+    border: 1px solid var(--accent-line); border-radius: var(--r-md); cursor: pointer;
+  }
+  .go:hover:not(:disabled) { background: var(--accent); color: #0A0A0A; }
+  .go:disabled { background: transparent; color: var(--mute); border-color: var(--hairline); cursor: default; }
+  .err { color: var(--red); font-size: 12.5px; padding: 6px 0 10px; }
+  .foot a.out { text-decoration: none; }
+  .foot a.out:hover { text-decoration: underline; }
+  .relog { display: none; background: #000; border: 1px solid var(--accent-line); border-radius: var(--r-lg);
+           padding: 14px 16px; margin-bottom: 12px; font-size: 12.5px; }
+  .relog ol { margin: 6px 0 10px; padding-left: 18px; color: var(--dim); }
+  .relog li { margin-bottom: 6px; }
+  .relog input { width: 100%; margin-top: 4px; padding: 7px 9px; font: 12px/1.3 ui-monospace, Consolas, monospace;
+                 background: var(--input); color: var(--text); border: 1px solid var(--hairline-2); border-radius: 8px; }
+  .relog .acts { display: flex; gap: 8px; }
+  .relog .urlrow { display: flex; gap: 8px; align-items: center; margin-top: 4px; }
+  .relog .urlrow input { margin-top: 0; flex: 1; min-width: 0; cursor: pointer; }
+  .relog .urlrow .btn { flex: none; }
+  .relog .msg { margin-top: 8px; color: var(--mute); }
+  .relog .msg.bad { color: var(--red); }
+  .relog label { display: block; color: var(--dim); margin: 8px 0 8px; }
+  .empty { color: var(--mute); font-size: 13px; padding: 14px 16px; border: 1px dashed var(--hairline-2); border-radius: var(--r-lg); }
+
+  /* --- koszt wznowienia sesji --- */
+  .sess { margin-top: 14px; }
+  .sess-h {
+    display: flex; align-items: baseline; gap: 8px;
+    font-size: 11px; color: var(--mute); text-transform: uppercase;
+    letter-spacing: .06em; margin-bottom: 7px;
+  }
+  .sess-h i { text-transform: none; letter-spacing: 0; font-style: normal; opacity: .75; }
+  .sess-row {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 9px; background: #000; border: 1px solid var(--hairline);
+    border-radius: var(--r-md); margin-bottom: 4px; font-size: 11.5px;
+  }
+  .sess-row .nm { color: var(--text); font-weight: 600; }
+  .sess-row .id { color: var(--mute); font-family: ui-monospace, monospace; font-size: 10.5px; }
+  .sess-row .ago { color: var(--mute); margin-left: auto; white-space: nowrap; }
+  .sess-row .cost { font-weight: 600; white-space: nowrap; }
+  .sess-row .cost.warm { color: var(--accent); }
+  .sess-row .cost.mid { color: var(--amber); }
+  .sess-row .cost.hot { color: var(--red); }
+
+</style>
+</head>
+<body>
+<div class="toolbar">
+  <h2 class="toolbar-title">Konta Claude Code <span class="stamp" id="stamp">wczytuję…</span></h2>
+  <div style="display:flex;align-items:center;gap:12px">
+    <span class="models" id="models"></span>
+    <label class="auto" id="auto" title="">
+      <input type="checkbox" id="autoBox" onchange="setAuto(this.checked)">
+      <span class="sw"></span><span class="lbl">auto</span>
+    </label>
+    <button class="btn" id="addCur">Zapisz bieżące konto</button>
+    <button class="btn" id="addNew">Dodaj konto</button>
+    <button class="btn" onclick="load()">↻ Odśwież</button>
+  </div>
+</div>
+<div class="warn" id="warn"></div>
+<!-- poza #grid: load() co 5 min przerysowuje kafle i skasowalby wpisywany kod -->
+<div class="relog" id="relog"></div>
+<div class="grid" id="grid"></div>
+<div class="sess" id="sess"></div>
+
+<script>
+const fmt = (iso) => iso
+  ? new Date(iso).toLocaleString('pl-PL', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
+  : '—';
+// Prog ostrzegawczy podaje Anthropic w `rate_limit_event.surpassedThreshold` (0.75).
+// Wczesniej mialam tu 60/85 wziete z sufitu.
+let PROG = 75;
+// „522 min" nic nie mowi - czlowiek mysli godzinami
+function wiek(ms) {
+  const min = Math.round(ms / 60000);
+  if (min < 60) return `${min} min`;
+  const h = Math.floor(min / 60), m = min % 60;
+  if (h < 24) return m ? `${h} h ${m} min` : `${h} h`;
+  const d = Math.round(h / 24);
+  return d === 1 ? 'ponad dobę' : `${d} dni`;
+}
+
+const cls = (p) => p >= 100 - (100 - PROG) / 3 ? 'hot' : p >= PROG ? 'mid' : '';
+
+// ile jeszcze czekać - sama godzina resetu nie odpowiada na "kiedy tu wrócę"
+function za(iso) {
+  if (!iso) return '';
+  const min = Math.round((new Date(iso) - Date.now()) / 60000);
+  if (min <= 0) return 'teraz';
+  if (min < 60) return `za ${min} min`;
+  const h = Math.floor(min / 60), m = min % 60;
+  if (h < 24) return m ? `za ${h} h ${m} min` : `za ${h} h`;
+  return `za ${Math.round(h / 24)} dni`;
+}
+
+const bar = (title, u) => u ? `
+  <div class="row"><span class="l">${title} <b>${u.pct}%</b></span>
+    <span class="r">${za(u.resetsAt) || 'brak resetu'}${u.resetsAt ? ' · ' + fmt(u.resetsAt) : ''}</span></div>
+  <div class="track"><div class="fill ${cls(u.pct)}" style="width:${Math.min(u.pct, 100)}%"></div></div>` : '';
+
+function foot(a) {
+  const exp = a.expiresAt;
+  const stale = exp && exp < Date.now();
+  // Claude Code odswieza token TYLKO konta, na ktorym pracuje - nieaktywne czeka
+  const tok = !exp ? 'brak tokenu'
+    : a.dead ? 'wymaga logowania'
+    : stale ? (a.active ? 'token wygasł — odświeży się sam' : 'token wygasł — odświeży się po przełączeniu')
+    : 'token do ' + fmt(new Date(exp).toISOString());
+  // Logowanie żyje ~4 tygodnie od zalogowania i rotacja go nie przedłuża - ostrzegamy
+  // zawczasu, żeby relogin zrobić spokojnie, a nie w chwili, gdy drugie konto ma limit.
+  const dni = a.loginExpiresAt ? Math.floor((a.loginExpiresAt - Date.now()) / 864e5) : null;
+  const login = !a.dead && dni !== null && dni < 5
+    ? `<a href="#" class="out" data-relogin="${a.name}" title="zaloguj ponownie teraz">logowanie wygasa ${dni <= 0 ? 'dziś' : 'za ' + dni + ' d'} · odnów</a>` : '';
+  // przy wyczerpanym koncie „zapas 0%" tylko powtarza to, co krzyczy czerwony pasek
+  const zapas = a.usage.error ? null : 100 - a.usage.session.pct;
+  const wolne = zapas === null ? ''
+    : zapas <= 0 ? '<span class="out">sesja wyczerpana</span>'
+    : `<span>zapas sesji <b style="color:var(--text)">${zapas}%</b></span>`;
+  const src = a.usage.source === 'cache' ? `<span title="API nie odpowiedziało — ostatni znany odczyt">z cache</span>` : '';
+  return `<div class="foot">${wolne}${src}${login}<span class="${stale || a.dead ? 'stale' : ''}">${tok}</span></div>`;
+}
+
+const card = (a) => `
+  <div class="acc ${a.active ? 'active' : ''}">
+    <div class="head"><span class="nm">${a.name}</span>${a.active ? '<span class="tag">aktywne</span>' : ''}</div>
+    <div class="mail">${a.email} · ${a.plan}</div>
+    ${a.usage.error ? `<div class="err">${a.usage.error}</div>` : [
+      bar('Sesja 5h', a.usage.session),
+      bar('Tydzień', a.usage.weekly),
+      bar('Opus (7 dni)', a.usage.opus),
+      bar('Sonnet (7 dni)', a.usage.sonnet),
+    ].join('')}
+    ${foot(a)}
+    ${a.dead
+      ? `<button class="go" data-relogin="${a.name}">zaloguj ponownie</button>`
+      : `<button class="go" ${a.active ? 'disabled' : ''} data-name="${a.name}">${a.active ? 'w użyciu' : 'przełącz'}</button>`}
+  </div>`;
+
+let running = 0;
+
+// Wznowienie sesji placi za CALY kontekst w cenie zapisu do cache (1,25x), bo po
+// przerwie cache jest zimny. Zwykla tura w trwajacej sesji placi 0,1x. Panel pokazuje
+// to PRZED `claude --resume`, zeby nie wchodzic w droga sesje w ciemno.
+function tokk(n) {
+  return n >= 1e6 ? (n / 1e6).toFixed(2).replace('.', ',') + ' mln'
+       : n >= 1e3 ? Math.round(n / 1e3) + 'k' : String(n);
+}
+function temu(at) {
+  const min = Math.round((Date.now() - at) / 60000);
+  if (min < 60) return min + ' min temu';
+  const h = min / 60;
+  return h < 48 ? Math.round(h) + ' h temu' : Math.round(h / 24) + ' dni temu';
+}
+function sessRow(s) {
+  // Ciepły cache = wznowienie prawie darmowe, więc koszt pokazujemy tylko dla zimnych.
+  const kl = !s.zimny ? 'warm' : s.kosztWznowienia >= 600000 ? 'hot'
+           : s.kosztWznowienia >= 250000 ? 'mid' : '';
+  const koszt = s.zimny
+    ? `<span class="cost ${kl}" title="cały kontekst (${s.kontekst.toLocaleString('pl')} tok.) trafi do cache od nowa">${tokk(s.kosztWznowienia)}</span>`
+    : `<span class="cost warm" title="cache prawdopodobnie jeszcze żyje — wznowienie kosztuje tyle, co zwykła tura">~${tokk(s.kosztTury)}</span>`;
+  return `<div class="sess-row">
+    <span class="nm">${s.projekt}</span>
+    <span class="id">${s.id}</span>
+    ${koszt}
+    <span class="ago">${temu(s.at)}</span>
+  </div>`;
+}
+function renderSess(list) {
+  const el = document.getElementById('sess');
+  if (!list || !list.length) { el.innerHTML = ''; return; }
+  el.innerHTML = `<div class="sess-h">Koszt wznowienia
+      <i>ile tokenów zapłacisz za samo wejście w sesję (<code>--resume</code>)</i></div>`
+    + list.map(sessRow).join('');
+}
+
+async function load() {
+  try {
+    const [accounts, run, sesje] = await Promise.all([
+      fetch('/api/accounts').then(r => r.json()),
+      fetch('/api/running').then(r => r.json()).catch(() => ({ count: 0 })),
+      fetch('/api/sessions').then(r => r.json()).catch(() => []),
+    ]);
+    renderSess(sesje);
+    running = run.count || 0;
+    // model jest wspolny dla obu kont, wiec stoi w naglowku, nie w kaflu
+    const m = run.models || {};
+    const kiedy = (ts) => {
+      if (!ts) return '';
+      const min = Math.round((Date.now() - ts) / 60000);
+      if (min < 60) return ` <i>${min} min temu</i>`;
+      const h = Math.round(min / 60);
+      return h < 48 ? ` <i>${h} h temu</i>` : ` <i>${Math.round(h / 24)} dni temu</i>`;
+    };
+    document.getElementById('models').innerHTML = [
+      m.session ? `sesje <b>${m.session}</b>${kiedy(m.sessionAt)}` : '',
+      m.job ? `SDK / -p <b>${m.job}</b>${kiedy(m.jobAt)}` : '',
+    ].filter(Boolean).join('<span class="sep">|</span>')
+      + (m.measured === false ? ' <i title="brak transkryptów — wartości z plików konfiguracyjnych">(deklaracja)</i>' : '');
+    document.getElementById('grid').innerHTML = accounts.length ? accounts.map(card).join('')
+      : '<div class="empty">Nie masz jeszcze zapisanych kont. Zacznij od „Zapisz bieżące konto” — to konto, na którym Claude Code jest teraz zalogowany.</div>';
+    // serwer moze oddac dane z cache - mowimy wprost, ile maja lat
+    const age = Math.max(0, ...accounts.map(a => a.usage.ageMs || 0));
+    document.getElementById('stamp').textContent =
+      new Date().toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' })
+      + (age >= 60000 ? ` · dane sprzed ${wiek(age)}` : '');
+    const w = document.getElementById('warn');
+    w.style.display = running ? 'flex' : 'none';
+    if (running) w.textContent = `⚠ Działa ${running} proces(ów) claude.exe — przełączenie pod żywą sesją może zostać nadpisane przy odświeżeniu tokenu.`;
+  } catch (e) {
+    document.getElementById('stamp').textContent = 'błąd: ' + e.message;
+  }
+}
+
+document.addEventListener('click', async (ev) => {
+  const btn = ev.target.closest('button[data-name]');
+  if (!btn || btn.disabled) return;
+  const name = btn.dataset.name;
+  if (!confirm(`Przełączyć na konto "${name}"?` + (running ? `\n\nUWAGA: działa ${running} proces(ów) claude.exe.` : ''))) return;
+  btn.disabled = true; btn.textContent = 'przełączam…';
+  try {
+    const r = await fetch('/api/switch', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name }),
+    }).then(r => r.json());
+    if (r.error) alert('Nie udało się: ' + r.error);
+  } catch (e) { alert('Nie udało się: ' + e.message); }
+  load();
+});
+
+// Ponowne logowanie bez terminala i bez /login w CLI (ten wylogowuje konto z ~/.claude).
+// Serwer loguje do katalogu konta w magazynie: najpierw daje link, potem przyjmuje kod.
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+async function post(url, body) {
+  const r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok || j.error) throw new Error(j.error ?? 'HTTP ' + r.status);
+  return j;
+}
+function relogMsg(text, bad) {
+  const m = document.querySelector('#relog .msg');
+  if (m) { m.textContent = text; m.classList.toggle('bad', !!bad); }
+}
+async function reloginStart(name) {
+  const box = document.getElementById('relog');
+  box.style.display = 'block';
+  box.innerHTML = `<b>Logowanie ${esc(name)}</b><div class="msg">przygotowuję link…</div>`;
+  try {
+    const r = await post('/api/relogin', { name });
+    box.innerHTML = `<b>Logowanie ${esc(name)}</b> <span style="color:var(--mute)">(${esc(r.email)})</span>
+      <ol>
+        <li>Skopiuj link i otwórz go w <b>oknie prywatnym</b> (Ctrl+Shift+N) — zwykłe okno zaloguje konto, które masz tam na claude.ai.
+          <span class="urlrow"><input id="relogUrl" readonly value="${esc(r.url)}" title="kliknij, żeby skopiować"><button class="btn" id="relogCopy">kopiuj link</button></span></li>
+        <li>Zaloguj <b>${esc(r.email)}</b> i zatwierdź. Strona pokaże kod.</li>
+        <li>Wklej kod tutaj: <input id="relogCode" placeholder="kod ze strony logowania" autocomplete="off"></li>
+      </ol>
+      <div class="acts">
+        <button class="btn" id="relogOk" data-name2="${esc(name)}">zapisz kod</button>
+        <button class="btn" id="relogX">anuluj</button>
+      </div>
+      <div class="msg">link ważny 10 minut · ~/.claude i otwarte sesje zostają nietknięte</div>`;
+  } catch (e) {
+    box.innerHTML = `<b>Logowanie ${esc(name)}</b><div class="msg bad">${esc(e.message)}</div>
+      <div class="acts" style="margin-top:8px"><button class="btn" id="relogX">zamknij</button></div>`;
+  }
+}
+document.addEventListener('click', async (ev) => {
+  const rl = ev.target.closest('[data-relogin]');
+  if (rl) { ev.preventDefault(); return reloginStart(rl.dataset.relogin); }
+  const id = ev.target.id;
+  if (id === 'relogX') { document.getElementById('relog').style.display = 'none'; return; }
+  if (id === 'relogCopy' || id === 'relogUrl') {
+    const u = document.getElementById('relogUrl');
+    u.select();
+    try { await navigator.clipboard.writeText(u.value); relogMsg('link skopiowany'); }
+    catch { relogMsg('zaznaczyłam link — Ctrl+C'); }
+    return;
+  }
+  if (id === 'relogOk') {
+    const name = ev.target.dataset.name2;
+    const code = document.getElementById('relogCode').value.trim();
+    if (!code) return relogMsg('najpierw wklej kod', true);
+    ev.target.disabled = true;
+    relogMsg('loguję…');
+    try {
+      const r = await post('/api/relogin-code', { name, code });
+      const do_ = r.loginExpiresAt ? new Date(r.loginExpiresAt).toLocaleDateString('pl-PL') : '?';
+      document.getElementById('relog').innerHTML = `<b>Zalogowane: ${esc(r.email)}</b>
+        <div class="msg">logowanie ważne do ${do_}${r.aktywne ? ' · konto aktywne — nowy token wgrany też do CLI' : ''}</div>
+        <div class="acts" style="margin-top:8px"><button class="btn" id="relogX">zamknij</button></div>`;
+      load();
+    } catch (e) {
+      ev.target.disabled = false;
+      relogMsg(e.message, true);
+    }
+  }
+});
+
+// Dodawanie kont: „Zapisz bieżące” kopiuje konto z ~/.claude, „Dodaj konto” loguje nowe
+// ta sama droga co relogin - do wlasnego katalogu w magazynie, link + kod.
+const relogBox = (html) => { const b = document.getElementById('relog'); b.style.display = 'block'; b.innerHTML = html; };
+const zamknij = '<div class="acts" style="margin-top:8px"><button class="btn" id="relogX">zamknij</button></div>';
+let addName = null;
+document.addEventListener('click', async (ev) => {
+  const id = ev.target.id;
+  if (id === 'addCur') {
+    relogBox('<b>Zapisz bieżące konto</b><div class="msg">zapisuję…</div>');
+    try {
+      const r = await post('/api/add-current', {});
+      relogBox(`<b>Zapisane: ${esc(r.email)}</b><div class="msg">nazwa w magazynie: ${esc(r.name)}</div>${zamknij}`);
+      load();
+    } catch (e) { relogBox(`<b>Zapisz bieżące konto</b><div class="msg bad">${esc(e.message)}</div>${zamknij}`); }
+    return;
+  }
+  if (id === 'addNew') {
+    // poprzednia niedokonczona proba nie moze zostawic pustego katalogu
+    if (addName) post('/api/add-new-cancel', { name: addName }).catch(() => {});
+    addName = null;
+    relogBox(`<b>Dodaj konto</b>
+      <label for="addNameIn">Nazwa konta
+        <input id="addNameIn" placeholder="np. praca (litery, cyfry, . _ -)" autocomplete="off" maxlength="40"></label>
+      <div class="acts"><button class="btn" id="addGo">dalej</button><button class="btn" id="relogX">anuluj</button></div>
+      <div class="msg"></div>`);
+    document.getElementById('addNameIn').focus();
+    return;
+  }
+  if (id === 'addGo') {
+    const name = document.getElementById('addNameIn').value.trim();
+    ev.target.disabled = true;
+    relogMsg('przygotowuję link…');
+    try {
+      const r = await post('/api/add-new', { name });
+      addName = name;
+      relogBox(`<b>Dodaj konto ${esc(name)}</b>
+        <ol>
+          <li>Otwórz link w oknie prywatnym przeglądarki (Ctrl+Shift+N) i zaloguj się na konto, które dodajesz.
+            <span class="urlrow"><input id="relogUrl" readonly value="${esc(r.url)}" title="kliknij, żeby skopiować"><button class="btn" id="relogCopy">kopiuj link</button></span></li>
+          <li>Po zalogowaniu skopiuj kod ze strony.</li>
+          <li>Wklej kod tutaj: <input id="relogCode" placeholder="kod ze strony logowania" autocomplete="off"></li>
+        </ol>
+        <div class="acts">
+          <button class="btn" id="addOk">zapisz kod</button>
+          <button class="btn" id="addX">anuluj</button>
+        </div>
+        <div class="msg">link ważny 10 minut · ~/.claude i otwarte sesje zostają nietknięte</div>`);
+    } catch (e) {
+      ev.target.disabled = false;
+      relogMsg(e.message, true);
+    }
+    return;
+  }
+  if (id === 'addX') {
+    if (addName) post('/api/add-new-cancel', { name: addName }).catch(() => {});
+    addName = null;
+    document.getElementById('relog').style.display = 'none';
+    return;
+  }
+  if (id === 'addOk') {
+    const code = document.getElementById('relogCode').value.trim();
+    if (!code) return relogMsg('najpierw wklej kod', true);
+    ev.target.disabled = true;
+    relogMsg('loguję…');
+    try {
+      const r = await post('/api/add-new-code', { name: addName, code });
+      addName = null;
+      relogBox(`<b>Dodane: ${esc(r.email)}</b>${zamknij}`);
+      load();
+    } catch (e) {
+      // serwer po porazce sprzata katalog i proces - zostaje tylko zaczac od nowa
+      addName = null;
+      relogBox(`<b>Dodaj konto</b><div class="msg bad">${esc(e.message)}</div>${zamknij}`);
+    }
+  }
+});
+
+// Endpoint usage ma ostry rate limit (HTTP 429), a panel bywa otwarty caly dzien.
+// Odpytujemy rzadko i tylko gdy panel jest naprawde na wierzchu (ukryty kontener
+// z display:none daje body zerowa wysokosc).
+const widoczny = () => !document.hidden && document.body.offsetHeight > 0;
+
+let ostatni = 0;
+function tick() {
+  if (!widoczny() || Date.now() - ostatni < 5 * 60_000) return;
+  ostatni = Date.now();
+  load();
+}
+
+// Stan auto-switcha zyje w pliku .autoswitch.json, nie w przegladarce - dwa otwarte
+// panele maja pokazywac to samo, wiec po kazdym zapisie czytamy stan z powrotem.
+async function loadAuto() {
+  const wrap = document.getElementById('auto');
+  const box = document.getElementById('autoBox');
+  try {
+    const a = await (await fetch('/api/auto')).json();
+    box.checked = !!a.enabled;
+    box.disabled = !a.tickActive;
+    wrap.classList.toggle('off', !a.tickActive);
+    wrap.title = a.tickActive
+      ? `automatyczne przelaczenie przy ${a.threshold}% zuzycia`
+      : 'panel uruchomiony z --no-auto - przelacznik nie zadziala';
+  } catch {
+    wrap.classList.add('off');
+    wrap.title = 'nie udalo sie odczytac stanu';
+  }
+}
+
+async function setAuto(enabled) {
+  try {
+    const r = await fetch('/api/auto', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ enabled }),
+    });
+    if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error ?? 'HTTP ' + r.status);
+  } catch (e) {
+    alert('nie udalo sie zapisac ustawienia: ' + e.message);
+  }
+  loadAuto();
+}
+
+load();
+loadAuto();
+ostatni = Date.now();
+setInterval(tick, 30_000);
+document.addEventListener('visibilitychange', tick);
+</script>
+</body>
+</html>

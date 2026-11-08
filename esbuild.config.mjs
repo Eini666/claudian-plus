@@ -205,7 +205,13 @@ const ariRobotWidgetJs = (await esbuild.build({
 
 const mainContext = await esbuild.context({
   entryPoints: ['src/main.ts'],
-  define: { ARI_ROBOT_WIDGET_JS: JSON.stringify(ariRobotWidgetJs) },
+  define: {
+    ARI_ROBOT_WIDGET_JS: JSON.stringify(ariRobotWidgetJs),
+    // Panel kont osadzony jako tekst — wtyczka zapisuje go do ~/.claudian-plus/accounts/ (panelFiles.ts).
+    // Jak robot: w watch zmiana w tools/accounts/* wymaga restartu `npm run dev`.
+    ACCOUNTS_PANEL_MJS: JSON.stringify(readFileSync('tools/accounts/accounts.mjs', 'utf8')),
+    ACCOUNTS_PANEL_HTML: JSON.stringify(readFileSync('tools/accounts/panel.html', 'utf8')),
+  },
   alias: {
     ...createDesktopRuntimeAliases(),
   },

@@ -148,11 +148,28 @@
       },
       "accountSwitcher": {
         "name": "Przełącznik kont",
-        "desc": "Wymaga lokalnego panelu kont. Zmiana działa po ponownym otwarciu karty."
+        "desc": "Plakietka konta i menu przełączania w pasku. Zmiana działa po ponownym otwarciu karty."
       },
       "accountsPanelUrl": {
         "name": "Adres panelu kont",
         "invalid": "Adres musi zaczynać się od http:// albo https://"
+      },
+      "accountsPanel": {
+        "managed": {
+          "name": "Uruchamiaj panel kont",
+          "desc": "Wtyczka uruchamia lokalny panel kont razem z Obsidianem i zatrzymuje go przy zamknięciu. Wyłącz, jeśli uruchamiasz panel sam."
+        },
+        "status": {
+          "name": "Stan panelu",
+          "nasz": "Działa (uruchomiony przez wtyczkę)",
+          "obcy": "Działa (uruchomiony poza wtyczką)",
+          "wylaczony": "Nie działa",
+          "blad": "Nie działa: {reason}",
+          "brakNode": "Brak Node.js — zainstaluj Node 20.11 lub nowszy z nodejs.org i uruchom Obsidiana ponownie",
+          "nielokalny": "Wtyczka uruchamia panel tylko pod adresem 127.0.0.1 albo localhost"
+        },
+        "open": "Otwórz panel",
+        "restart": "Uruchom ponownie"
       },
       "telegramBridge": {
         "name": "Most Telegrama",

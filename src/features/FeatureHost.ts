@@ -11,6 +11,7 @@ import type {
   ConversationMutablePatch,
   StoredChatModelSelection,
 } from '../core/types';
+import type { AccountsPanelHost } from './accounts/AccountsPanelHost';
 import type { ChatExecutionPersistence } from './chat/execution/ChatExecutionCoordinator';
 import type { WarmExecutionPool } from './chat/execution/WarmExecutionPool';
 import type { AssembledTabRuntime, TabId, TabManagerViewHost } from './chat/tabs/types';
@@ -82,6 +83,8 @@ export interface FeatureHost {
   readonly collabComposerReferences?: CollabComposerReferencePort;
   /** Most Telegrama w trybie wbudowanym (panel w ustawieniach). */
   readonly telegramBridge: BuiltinBridge;
+  /** Lokalny panel kont uruchamiany przez wtyczke (stan w ustawieniach). */
+  readonly accountsPanel: AccountsPanelHost;
 
   getMainAgentDynamicSystemPromptSections?(): Promise<readonly string[]>;
 

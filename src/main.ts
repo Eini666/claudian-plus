@@ -80,6 +80,7 @@ import {
   VIEW_TYPE_CLAUDIAN,
 } from './core/types';
 import type { ChatViewPlacement, EnvironmentScope } from './core/types/settings';
+import { AccountsPanelHost } from './features/accounts/AccountsPanelHost';
 import { ClaudianView } from './features/chat/ClaudianView';
 import type { ChatExecutionPersistence } from './features/chat/execution/ChatExecutionCoordinator';
 import {
@@ -232,6 +233,8 @@ export default class ClaudianPlugin extends Plugin {
   private isUnloading = false;
   /** Most wbudowany Telegrama; tryb `external` zostawia folder zewnetrznemu programowi. */
   readonly telegramBridge = new BuiltinBridge(() => this.settings);
+  /** Panel kont uruchamiany przez wtyczke; cudzy panel na tym samym porcie zostaje nietkniety. */
+  readonly accountsPanel = new AccountsPanelHost(() => this.settings);
   private applicationShutdownPromise: Promise<void> | null = null;
   private tabWorkspaceMigrationCoordinator!: TabWorkspaceMigrationCoordinator;
 
@@ -253,6 +256,7 @@ export default class ClaudianPlugin extends Plugin {
       // Provider workspace services are initialized lazily on first use.
       setAssistantNameSource(() => this.settings?.assistantName);
       this.telegramBridge.odswiez();
+      void this.accountsPanel.odswiez();
 
       // Obsidian bywa otwarty dniami — archiwizacja nieaktywnych rozmow nie tylko przy starcie.
       this.registerInterval(window.setInterval(() => {
@@ -479,6 +483,7 @@ export default class ClaudianPlugin extends Plugin {
     // Plywajace okno zyje poza drzewem Obsidiana — bez tego zostaje na wierzchu.
     disposeAriWidget();
     this.telegramBridge.stop();
+    this.accountsPanel.stop();
     stopLocalPageServer();
     this.collabTransientSurfaces.closeAll();
     if (this.sessionMetadataLoadTimer !== null) {
@@ -1843,7 +1848,10 @@ export default class ClaudianPlugin extends Plugin {
 
   async saveSettings() {
     await this.settingsCoordinator.persistCurrent();
-    if (!this.isUnloading) this.telegramBridge.odswiez();
+    if (!this.isUnloading) {
+      this.telegramBridge.odswiez();
+      void this.accountsPanel.odswiez();
+    }
   }
 
   async mutateSettings(
@@ -1851,7 +1859,10 @@ export default class ClaudianPlugin extends Plugin {
     onCommitted?: SettingsCommit<ClaudianSettings>,
   ): Promise<void> {
     await this.settingsCoordinator.mutate(mutation, onCommitted);
-    if (!this.isUnloading) this.telegramBridge.odswiez();
+    if (!this.isUnloading) {
+      this.telegramBridge.odswiez();
+      void this.accountsPanel.odswiez();
+    }
   }
 
   isCollabEnabled(): boolean {

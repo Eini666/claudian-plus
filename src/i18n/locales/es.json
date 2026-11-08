@@ -496,11 +496,28 @@
       },
       "accountSwitcher": {
         "name": "Account switcher",
-        "desc": "Requires a local accounts panel. Takes effect after reopening the tab."
+        "desc": "Account badge and switch menu in the bar. Takes effect after reopening the tab."
       },
       "accountsPanelUrl": {
         "name": "Accounts panel URL",
         "invalid": "The address must start with http:// or https://"
+      },
+      "accountsPanel": {
+        "managed": {
+          "name": "Start the accounts panel",
+          "desc": "The plugin starts the local accounts panel with Obsidian and stops it on close. Turn off if you run the panel yourself."
+        },
+        "status": {
+          "name": "Panel status",
+          "nasz": "Running (started by the plugin)",
+          "obcy": "Running (started outside the plugin)",
+          "wylaczony": "Not running",
+          "blad": "Not running: {reason}",
+          "brakNode": "Node.js not found — install Node 20.11 or newer from nodejs.org and restart Obsidian",
+          "nielokalny": "The plugin starts the panel only at 127.0.0.1 or localhost"
+        },
+        "open": "Open panel",
+        "restart": "Restart"
       },
       "telegramBridge": {
         "name": "Telegram bridge",

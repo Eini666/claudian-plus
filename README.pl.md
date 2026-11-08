@@ -130,8 +130,64 @@ i nie dokleja instrukcji o głosówkach — jeśli chcesz ich, Twój program mo�
 
 ## Przełącznik kont Claude
 
-Domyślnie wyłączony. Wymaga lokalnego panelu kont pod adresem z ustawień (panel w przygotowaniu).
-Pasek limitów działa bez niego.
+Dla osób z kilkoma kontami Claude (np. prywatne i firmowe). Przełączasz konto jednym kliknięciem
+w pasku, bez `claude auth logout` / `login`, a przy każdym koncie widzisz zużycie limitu 5 h i 7 dni,
+także na tych, na których akurat nie jesteś. Domyślnie wyłączony. Pasek limitów działa bez niego.
+
+### Włączenie
+
+1. *Ustawienia → Claudian Plus → Dodatki* → włącz **„Przełącznik kont”**.
+2. Zostaw włączone **„Uruchamiaj panel kont”**. Wtyczka sama zapisze lokalny panel kont
+   w `~/.claudian-plus/accounts/` i uruchomi go razem z Obsidianem (adres `http://127.0.0.1:7788`).
+   Panel wymaga **Node.js 20.11 lub nowszego** w PATH. Bez niego „Stan panelu” pokaże „Brak Node.js”.
+3. **„Otwórz panel”** → **„Zapisz bieżące konto”**. To konto, na którym Claude Code jest teraz zalogowany.
+4. **„Dodaj konto”** dla każdego kolejnego: podaj nazwę (np. `praca`), otwórz link **w oknie
+   prywatnym** przeglądarki (Ctrl+Shift+N), zaloguj się na to konto, skopiuj kod ze strony i wklej go
+   w panelu. Zwykłe okno zalogowałoby konto, które masz już otwarte na claude.ai.
+5. Otwórz kartę czatu ponownie. Obok paska limitów pojawi się plakietka konta z menu przełączania.
+
+**Nie używaj `claude auth logout` do dodawania kont.** Wylogowanie może unieważnić token konta,
+którego kopię panel właśnie zapisał.
+
+### Na co dzień
+
+- **Przełączenie** — plakietka w pasku albo przycisk „przełącz” w panelu. Menu pokazuje zużycie
+  każdego konta. Przy długiej rozmowie widzisz też koszt przełączenia: cache promptu jest osobny dla
+  każdego konta, więc nowe konto zapisuje cały kontekst od nowa (ok. 12,5× drożej niż odczyt).
+  Przy bardzo dużym kontekście lepiej zacząć nową rozmowę.
+- **Auto-switch** (włączany w panelu, domyślnie wyłączony) — gdy aktywne konto przekroczy 90%
+  limitu, panel przełącza na najmniej zużyte konto poniżej progu. Nie przełącza, jeśli okno 5 h
+  odnowi się za kilka minut. Próg zmienisz w `~/.claude/accounts/.autoswitch.json`.
+- **„zaloguj ponownie”** — logowanie konta żyje ok. 4 tygodni od zalogowania. Gdy wygaśnie, panel
+  pokaże przycisk i poprowadzi przez to samo okno prywatne i kod.
+- Panel działa, dopóki działa Obsidian. Chcesz go mieć zawsze, także dla samego CLI? Wyłącz
+  „Uruchamiaj panel kont” i dodaj zadanie autostartu (Windows, PowerShell):
+
+```powershell
+$dir = "$env:USERPROFILE\.claudian-plus\accounts"
+$action = New-ScheduledTaskAction -Execute 'C:\Program Files\nodejs\node.exe' `
+  -Argument 'accounts.mjs serve 7788' -WorkingDirectory $dir
+$trigger = New-ScheduledTaskTrigger -AtLogOn -User $env:USERNAME
+Register-ScheduledTask -TaskName 'Konta Claude Code' -Action $action -Trigger $trigger
+```
+
+### Bezpieczeństwo
+
+- `~/.claude/accounts/` zawiera **jawne tokeny logowania** każdego konta. Traktuj ten folder jak
+  hasło: nie wrzucaj go do repozytorium, synchronizacji ani niezaszyfrowanej kopii w chmurze.
+- Panel nasłuchuje tylko na `127.0.0.1` i odrzuca żądania ze stron innych niż sam panel i Obsidian.
+  Przeglądarka dostaje adresy e-mail i procenty, tokeny nie opuszczają panelu.
+- Przed każdym przełączeniem panel robi kopię plików logowania do `~/.claude/accounts/.backup/`.
+- To narzędzie do **własnych** kont, za które płacisz, a nie do obchodzenia limitów.
+
+### Ograniczenia
+
+- Windows: testowane. Linux: powinien działać, nietestowany. **macOS: nie działa** — Claude Code
+  trzyma tam logowanie w Keychainie, nie w pliku.
+- Panel jest tylko po polsku.
+- Wygasły token zwraca błąd `429`, nie `401` — jeśli panel pisze „token wygasł”, zaloguj konto ponownie.
+- Endpoint limitów ma ostry rate limit. Panel trzyma odczyty w pamięci podręcznej i pyta tylko wtedy,
+  gdy jest widoczny.
 
 ## Wymagania
 
@@ -139,6 +195,7 @@ Pasek limitów działa bez niego.
 - [Claude Code CLI](https://docs.claude.com/en/docs/claude-code) zainstalowany i zalogowany
 - Node 24 do zbudowania wtyczki
 - Głosówki: Windows x64
+- Przełącznik kont: Node.js 20.11+ w PATH, Windows (Linux nietestowany, macOS nie)
 
 Dodatki Claudian Plus są testowane tylko na Windows; funkcje głosowe wymagają Windows x64.
 
