@@ -1,0 +1,68 @@
+/* Pasek „szukaj w rozmowie" (Ctrl+F) — plywa nad wiadomosciami, nie przesuwa ukladu. */
+.claudian-find-bar {
+  position: absolute;
+  top: var(--size-4-2);
+  right: var(--size-4-3);
+  z-index: 20;
+  display: flex;
+  gap: var(--size-4-1);
+  align-items: center;
+  padding: var(--size-4-1) var(--size-4-2);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-m);
+  background: var(--background-secondary);
+  box-shadow: var(--shadow-s);
+}
+
+.claudian-find-hidden {
+  display: none;
+}
+
+.claudian-find-input {
+  width: 200px;
+  height: var(--input-height);
+  padding: 0 var(--size-4-2);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-s);
+  background: var(--background-primary);
+  color: var(--text-normal);
+  font-size: var(--font-ui-small);
+}
+
+.claudian-find-count {
+  min-width: 5.5em;
+  color: var(--text-muted);
+  font-size: var(--font-ui-smaller);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.claudian-find-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-s);
+  background: transparent;
+  box-shadow: none;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.claudian-find-button:hover {
+  background: var(--background-modifier-hover);
+  color: var(--text-normal);
+}
+
+/* Podswietlenie bez ruszania DOM-u — Highlight API (Chromium 142 w Obsidianie). */
+::highlight(claudian-find) {
+  background-color: var(--text-highlight-bg);
+}
+
+::highlight(claudian-find-current) {
+  background-color: var(--text-accent);
+  color: var(--text-on-accent);
+}

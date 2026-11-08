@@ -1,0 +1,149 @@
+/* Bloki ```ari-ui (AriUi.ts): wariant C „panel” z makiety 27.10.2026 — jedna ramka na blok, kafelki w srodku.
+   Wszystkie kolory z motywu Obsidiana; model nie podaje zadnych. */
+
+.ari-ui {
+  position: relative;
+  container: ari-ui / inline-size;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 12px 0;
+  padding: 14px 16px;
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 12px;
+  font-family: var(--font-interface);
+}
+
+.ari-ui-row {
+  display: grid;
+  grid-template-columns: repeat(var(--ari-ui-cols, 1), minmax(0, 1fr));
+  gap: 8px;
+}
+
+@container ari-ui (max-width: 520px) {
+  .ari-ui-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.ari-ui-stat {
+  background: var(--background-modifier-hover);
+  border-radius: 8px;
+  padding: 8px 12px;
+  min-width: 0;
+}
+
+.ari-ui-stat-label,
+.ari-ui-chart-label {
+  font-size: 0.8em;
+  color: var(--text-muted);
+}
+
+.ari-ui-stat-value {
+  font-size: 1.35em;
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--text-normal);
+  overflow-wrap: anywhere;
+}
+
+.ari-ui-stat-delta {
+  font-size: 0.8em;
+  color: var(--text-muted);
+}
+
+.ari-ui-stat-delta.is-good {
+  color: var(--color-green);
+}
+
+.ari-ui-stat-delta.is-bad {
+  color: var(--color-red);
+}
+
+.ari-ui-chart + .ari-ui-chart,
+.ari-ui-row + .ari-ui-chart,
+.ari-ui-chart + .ari-ui-row {
+  border-top: 1px solid var(--background-modifier-border);
+  padding-top: 12px;
+}
+
+.ari-ui-chart svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.ari-ui-chart text {
+  fill: var(--text-faint);
+  font-size: 12px;
+  font-family: var(--font-interface);
+}
+
+.ari-ui-chart text.ari-ui-value {
+  fill: var(--text-normal);
+  font-weight: 600;
+}
+
+.ari-ui-grid {
+  stroke: var(--background-modifier-border);
+  stroke-width: 1;
+}
+
+.ari-ui-base,
+.ari-ui-cross {
+  stroke: var(--background-modifier-border-hover);
+  stroke-width: 1;
+}
+
+.ari-ui-bar,
+.ari-ui-dot {
+  fill: var(--interactive-accent);
+}
+
+.ari-ui-dot {
+  stroke: var(--background-secondary);
+  stroke-width: 2;
+}
+
+.ari-ui-line {
+  fill: none;
+  stroke: var(--interactive-accent);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.ari-ui-area {
+  fill: var(--interactive-accent);
+  opacity: 0.1;
+}
+
+.ari-ui-hit {
+  fill: transparent;
+}
+
+.ari-ui-tip {
+  position: absolute;
+  display: none;
+  z-index: 2;
+  pointer-events: none;
+  white-space: nowrap;
+  padding: 4px 8px;
+  font-size: 0.75em;
+  color: var(--text-normal);
+  background: var(--background-primary);
+  border: 1px solid var(--background-modifier-border-hover);
+  border-radius: 6px;
+}
+
+.ari-ui-tip.is-visible {
+  display: block;
+}
+
+.ari-ui-empty,
+.ari-ui-skipped {
+  font-size: 0.8em;
+  color: var(--text-faint);
+}

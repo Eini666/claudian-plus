@@ -1,0 +1,21 @@
+.claudian-ari-avatar {
+  flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
+  align-self: center;
+  margin-right: 2px;
+  border-radius: 50%;
+  cursor: pointer;
+  opacity: 0.8;
+  transition: opacity 120ms ease, box-shadow 120ms ease;
+}
+
+.claudian-ari-avatar:hover {
+  opacity: 1;
+}
+
+/* Obwodka = plywajace okno na pulpicie wlaczone. */
+.claudian-ari-avatar.claudian-ari-widget-on {
+  opacity: 1;
+  box-shadow: 0 0 0 2px var(--interactive-accent);
+}

@@ -1,0 +1,683 @@
+{
+  "common": {
+    "save": "Zapisz",
+    "cancel": "Anuluj",
+    "delete": "Usuń",
+    "edit": "Edytuj",
+    "preview": "Podgląd",
+    "add": "Dodaj",
+    "remove": "Usuń",
+    "clear": "Wyczyść",
+    "clearAll": "Wyczyść wszystko",
+    "loading": "Ładowanie",
+    "error": "Błąd",
+    "success": "Gotowe",
+    "warning": "Uwaga",
+    "confirm": "Potwierdź",
+    "settings": "Ustawienia",
+    "advanced": "Zaawansowane",
+    "enabled": "Włączone",
+    "disabled": "Wyłączone",
+    "platform": "Platforma",
+    "refresh": "Odśwież",
+    "rewind": "Cofnij"
+  },
+  "chat": {
+    "rewind": {
+      "confirmMessage": "Cofnąć do tego miejsca? Zmiany w plikach wprowadzone po tej wiadomości mogą zostać nadpisane lub usunięte. Tego nie da się odwrócić.",
+      "confirmMessageConflicts": "Cofnąć do tego miejsca? {count} plik(ów) zmieniono poza agentem — zostaną nadpisane:\n{files}",
+      "confirmMessageConversationOnly": "Cofnąć samą rozmowę do tego miejsca? Zmiany w plikach zostaną zachowane.",
+      "confirmButton": "Cofnij",
+      "inProgress": "Poczekaj, aż bieżące cofanie się zakończy.",
+      "ariaLabel": "Cofnij do tego miejsca",
+      "menuConversationOnly": "Cofnij samą rozmowę",
+      "menuCodeAndConversation": "Cofnij kod i rozmowę",
+      "notice": "Cofnięto: przywrócono {count} plik(ów)",
+      "noticeConversationOnly": "Cofnięto rozmowę; zmiany w plikach zachowane",
+      "noticeSaveFailed": "Cofnięto: przywrócono {count} plik(ów), ale nie udało się zapisać stanu: {error}",
+      "noticeConversationOnlySaveFailed": "Cofnięto rozmowę, ale nie udało się zapisać stanu: {error}",
+      "failed": "Cofanie nie powiodło się: {error}",
+      "cannot": "Nie można cofnąć: {error}",
+      "unavailableStreaming": "Nie można cofać w trakcie odpowiedzi",
+      "unavailableNoUuid": "Nie można cofnąć: brak identyfikatorów wiadomości"
+    },
+    "fork": {
+      "ariaLabel": "Rozgałęź rozmowę",
+      "chooseTarget": "Rozgałęź rozmowę",
+      "targetNewTab": "Nowa karta",
+      "targetCurrentTab": "Bieżąca karta",
+      "notice": "Rozgałęziono do nowej karty",
+      "noticeCurrentTab": "Rozgałęziono w bieżącej karcie",
+      "failed": "Rozgałęzienie nie powiodło się: {error}",
+      "unavailableStreaming": "Nie można rozgałęziać w trakcie odpowiedzi",
+      "unavailableNoUuid": "Nie można rozgałęzić: brak identyfikatorów wiadomości",
+      "unavailableNoResponse": "Nie można rozgałęzić: brak odpowiedzi, od której zacząć",
+      "errorMessageNotFound": "Nie znaleziono wiadomości",
+      "errorNoSession": "Brak identyfikatora sesji",
+      "errorNoActiveTab": "Brak aktywnej karty",
+      "commandNoMessages": "Nie można rozgałęzić: rozmowa jest pusta",
+      "commandNoAssistantUuid": "Nie można rozgałęzić: żadna odpowiedź nie ma identyfikatorów"
+    },
+    "bangBash": {
+      "placeholder": "> Wpisz polecenie basha...",
+      "commandPanel": "Panel poleceń",
+      "copyAriaLabel": "Skopiuj ostatni wynik polecenia",
+      "clearAriaLabel": "Wyczyść wynik basha",
+      "commandLabel": "{command}",
+      "statusLabel": "Status: {status}",
+      "collapseOutput": "Zwiń wynik polecenia",
+      "expandOutput": "Rozwiń wynik polecenia",
+      "running": "Wykonuję...",
+      "copyFailed": "Nie udało się skopiować do schowka"
+    },
+    "ui": {
+      "inputPlaceholder": "Napisz, o co chodzi — @nazwa pliku, /komenda",
+      "effortLabel": "Wysiłek:",
+      "budgetLabel": "Myślenie:",
+      "thinking": "Myślę {seconds} s...",
+      "thinkingAriaLabel": "Rozszerzone myślenie — kliknij, żeby rozwinąć",
+      "statusNeedsInput": "Czeka na Ciebie",
+      "statusError": "Zatrzymane błędem",
+      "statusRunning": "Pracuję",
+      "attachImage": "Załącz obrazy z dysku",
+      "attachImageFailed": "Nie udało się załączyć obrazu.",
+      "attachImageDone": "Załączono: {count}",
+      "attachFilterImages": "Obrazy",
+      "attachFilterAll": "Wszystkie pliki"
+    },
+    "linkedContent": {
+      "prefix": "Przypięta treść:",
+      "none": "Brak",
+      "noneDetail": "Nic nie przypięte",
+      "label": "Przypięta treść: {path}",
+      "labelMissing": "Przypięta treść: {path}. Brak pliku",
+      "missingSuffix": "Brak pliku"
+    },
+    "welcome": {
+      "personalized": "{base}, {name}",
+      "daySunday": "Niedzielnie",
+      "dayMonday": "Poniedziałek, do dzieła",
+      "dayTuesday": "Wtorek",
+      "dayWednesday": "Środa, półmetek",
+      "dayThursday": "Czwartek",
+      "dayFriday": "Piątek",
+      "daySaturday": "Sobota",
+      "weekend": "Weekend się zaczął",
+      "backAtIt": "Wracamy do roboty",
+      "fridayFeeling": "Piątkowa energia",
+      "morning": "Dzień dobry",
+      "morningCoffee": "Kawa i do roboty?",
+      "afternoon": "Dzień dobry",
+      "evening": "Dobry wieczór",
+      "eveningShort": "Wieczór",
+      "nightOwl": "Nocny marek się kłania",
+      "howWasDay": "Jak minął dzień",
+      "heyThere": "Cześć",
+      "howsItGoing": "Co słychać",
+      "welcomeBack": "Znowu tu jesteś",
+      "whatsNew": "Co nowego",
+      "hiHowAreYou": "Cześć, co u Ciebie?",
+      "hiNameHowAreYou": "Cześć {name}, co u Ciebie?",
+      "nameReturns": "{name} wraca!",
+      "absolutelyRight": "Masz absolutną rację!"
+    }
+  },
+  "settings": {
+    "title": "Ustawienia Claudiana",
+    "tabs": {
+      "general": "Ogólne",
+      "collab": "Współpraca",
+      "providers": "Dostawcy",
+      "claude": "Claude",
+      "codex": "Codex"
+    },
+    "display": "Wygląd",
+    "extras": {
+      "heading": "Dodatki",
+      "assistantName": {
+        "name": "Nazwa asystenta",
+        "desc": "Pokazywana w powiadomieniach, cytatach i przy awatarze."
+      },
+      "showAvatarBadge": {
+        "name": "Awatar w pasku",
+        "desc": "Plakietka ze stanem asystenta obok wyboru modelu. Zmiana działa po ponownym otwarciu karty."
+      },
+      "showAriWidget": {
+        "name": "Awatar na pulpicie",
+        "desc": "Pływające okienko ze stanem asystenta, gdy Obsidian jest w tle."
+      },
+      "accountSwitcher": {
+        "name": "Przełącznik kont",
+        "desc": "Wymaga lokalnego panelu kont. Zmiana działa po ponownym otwarciu karty."
+      },
+      "accountsPanelUrl": {
+        "name": "Adres panelu kont",
+        "invalid": "Adres musi zaczynać się od http:// albo https://"
+      },
+      "telegramBridge": {
+        "name": "Most Telegrama",
+        "desc": "Wiadomości z telefonu, tryb poza domem i głosówki — przez wbudowanego bota Telegrama albo własny program."
+      },
+      "telegramBridgeDir": {
+        "name": "Folder mostu",
+        "placeholder": "np. C:\\Narzedzia\\most-telegrama"
+      },
+      "telegram": {
+        "error": "Błąd: {message}",
+        "mode": {
+          "name": "Tryb mostu",
+          "builtin": "Wbudowany bot",
+          "external": "Zewnętrzny program"
+        },
+        "token": {
+          "name": "Token bota",
+          "desc": "Utwórz bota u @BotFather i wklej token. Token jest zapisywany poza vaultem."
+        },
+        "pair": {
+          "name": "Połącz telefon",
+          "waiting": "Napisz teraz dowolną wiadomość do bota (pozostało {s} s).",
+          "done": "Połączono.",
+          "paired": "Telefon połączony.",
+          "unpaired": "Telefon niepołączony.",
+          "timeout": "Nie przyszła żadna wiadomość. Spróbuj ponownie.",
+          "busy": "Most działa już w innym oknie Obsidiana."
+        },
+        "tools": {
+          "name": "Narzędzia głosu",
+          "install": "Zainstaluj (ok. {mb} MB)",
+          "installing": "Instalowanie… {percent}%",
+          "ready": "Gotowe",
+          "missing": "Brak",
+          "windowsOnly": "Tylko Windows"
+        },
+        "voice": {
+          "name": "Głos"
+        },
+        "speech": {
+          "name": "Rozpoznawanie mowy",
+          "desc": "Zamienia Twoje głosówki z Telegrama na tekst. Działa lokalnie.",
+          "model": {
+            "large-v3-turbo": "large-v3-turbo — dokładny (~550 MB)",
+            "small": "small — szybki (~180 MB)"
+          }
+        },
+        "test": {
+          "name": "Wyślij głosówkę testową",
+          "text": "To jest głosówka testowa z Claudian Plus.",
+          "sent": "Wysłano głosówkę testową."
+        }
+      }
+    },
+    "conversations": "Rozmowy",
+    "content": "Treść",
+    "input": "Wpisywanie",
+    "setup": "Konfiguracja",
+    "models": "Modele",
+    "experimental": "Eksperymentalne",
+    "userName": {
+      "name": "Jak Claudian ma się do Ciebie zwracać?",
+      "desc": "Twoje imię do powitań (zostaw puste, żeby były bezosobowe)"
+    },
+    "excludedTags": {
+      "name": "Pomijane tagi",
+      "desc": "Notatki z tymi tagami nie wejdą automatycznie do kontekstu (jeden na linię, bez #)"
+    },
+    "mediaFolder": {
+      "name": "Folder z załącznikami",
+      "desc": "Folder z obrazami i załącznikami. Gdy notatka używa ![[obraz.jpg]], Claude zajrzy tutaj. Puste = katalog główny skarbca."
+    },
+    "systemPrompt": {
+      "name": "Własny prompt systemowy",
+      "desc": "Dodatkowe instrukcje doklejane do domyślnego promptu systemowego"
+    },
+    "autoTitle": {
+      "name": "Automatyczne tytuły rozmów",
+      "desc": "Nadawaj tytuł rozmowie zaraz po wysłaniu pierwszej wiadomości."
+    },
+    "titleLanguage": {
+      "name": "Język tytułów",
+      "desc": "Język automatycznie nadawanych tytułów rozmów.",
+      "followInterface": "Taki jak język interfejsu"
+    },
+    "titleModel": {
+      "name": "Model do tytułów",
+      "desc": "Model używany do nadawania tytułów rozmowom.",
+      "auto": "Automatycznie (Haiku)"
+    },
+    "navMappings": {
+      "name": "Nawigacja w stylu Vima",
+      "desc": "Jedno przypisanie na linię. Format: \"map <klawisz> <akcja>\" (akcje: scrollUp, scrollDown, focusInput)."
+    },
+    "requireCommandOrControlEnterToSend": {
+      "name": "Wysyłaj przez Command/Ctrl+Enter",
+      "desc": "Po włączeniu Enter wstawia nową linię. Wysyła Command+Enter na macOS, Ctrl+Enter na Windows i Linuksie."
+    },
+    "hotkeys": "Skróty klawiszowe",
+    "inlineEditHotkey": {
+      "name": "Edycja w tekście",
+      "descWithKey": "Obecny skrót: {hotkey}",
+      "descNoKey": "Skrót nieustawiony",
+      "btnChange": "Zmień",
+      "btnSet": "Ustaw skrót"
+    },
+    "openChatHotkey": {
+      "name": "Otwórz czat",
+      "descWithKey": "Obecny skrót: {hotkey}",
+      "descNoKey": "Skrót nieustawiony",
+      "btnChange": "Zmień",
+      "btnSet": "Ustaw skrót"
+    },
+    "newSessionHotkey": {
+      "name": "Zastąp bieżącą rozmowę",
+      "descWithKey": "Obecny skrót: {hotkey}",
+      "descNoKey": "Skrót nieustawiony",
+      "btnChange": "Zmień",
+      "btnSet": "Ustaw skrót"
+    },
+    "newTabHotkey": {
+      "name": "Nowa",
+      "descWithKey": "Obecny skrót: {hotkey}",
+      "descNoKey": "Skrót nieustawiony",
+      "btnChange": "Zmień",
+      "btnSet": "Ustaw skrót"
+    },
+    "closeTabHotkey": {
+      "name": "Zamknij kartę",
+      "descWithKey": "Obecny skrót: {hotkey}",
+      "descNoKey": "Skrót nieustawiony",
+      "btnChange": "Zmień",
+      "btnSet": "Ustaw skrót"
+    },
+    "enableBangBash": {
+      "name": "Włącz tryb basha (!)",
+      "desc": "Wpisz ! w pustym polu, żeby wejść w tryb basha. Polecenia idą prosto przez child_process Node.js. Wymaga ponownego otwarcia widoku.",
+      "validation": {
+        "noNode": "Nie znaleziono Node.js w PATH. Zainstaluj Node.js albo sprawdź konfigurację PATH."
+      }
+    },
+    "slashCommands": {
+      "name": "Komendy i umiejętności",
+      "desc": "Zarządzaj komendami i umiejętnościami skarbca z .claude/commands/ i .claude/skills/. Wywołujesz je przez /nazwa."
+    },
+    "hiddenSlashCommands": {
+      "name": "Ukryte komendy i umiejętności",
+      "desc": "Ukryj wybrane pozycje z listy rozwijanej. Przydatne, gdy wpisy z Claude Code nie mają sensu w Claudianie. Wpisuj nazwy bez ukośnika, jedna na linię.",
+      "placeholder": "commit\nbuild\ntest"
+    },
+    "mcpServers": {
+      "name": "Serwery MCP",
+      "descBeforeCommand": "Claude Code zarządza serwerami MCP przez własne CLI. Skonfiguruj przez ",
+      "descAfterCommand": " — będą dostępne w Claudianie. ",
+      "learnMore": "Dowiedz się więcej"
+    },
+    "plugins": {
+      "name": "Wtyczki Claude Code",
+      "desc": "Zarządzaj wtyczkami Claude Code znalezionymi w ~/.claude/plugins. Włączone wtyczki zapisują się osobno dla każdego skarbca w .claude/settings.json."
+    },
+    "subagents": {
+      "name": "Podagenci",
+      "desc": "Zarządzaj podagentami skarbca z .claude/agents/. Każdy plik Markdown to jeden własny agent.",
+      "noAgents": "Nie masz żadnych podagentów. Kliknij +, żeby dodać.",
+      "deleteConfirm": "Usunąć podagenta „{name}\"?",
+      "saveFailed": "Nie udało się zapisać podagenta: {message}",
+      "refreshFailed": "Nie udało się odświeżyć listy podagentów: {message}",
+      "deleteFailed": "Nie udało się usunąć podagenta: {message}",
+      "renameCleanupFailed": "Uwaga: nie udało się usunąć starego pliku dla „{name}\"",
+      "created": "Podagent „{name}\" utworzony",
+      "updated": "Podagent „{name}\" zaktualizowany",
+      "deleted": "Podagent „{name}\" usunięty",
+      "duplicateName": "Agent o nazwie „{name}\" już istnieje",
+      "descriptionRequired": "Opis jest wymagany",
+      "promptRequired": "Prompt systemowy jest wymagany",
+      "modal": {
+        "titleEdit": "Edytuj podagenta",
+        "titleAdd": "Dodaj podagenta",
+        "name": "Nazwa",
+        "nameDesc": "Tylko małe litery, cyfry i myślniki",
+        "namePlaceholder": "recenzent-kodu",
+        "description": "Opis",
+        "descriptionDesc": "Krótki opis tego agenta",
+        "descriptionPlaceholder": "Przegląda kod pod kątem błędów i stylu",
+        "advancedOptions": "Opcje zaawansowane",
+        "model": "Model",
+        "modelDesc": "Model narzucony temu agentowi",
+        "tools": "Narzędzia",
+        "toolsDesc": "Lista dozwolonych narzędzi po przecinku (puste = wszystkie)",
+        "disallowedTools": "Zablokowane narzędzia",
+        "disallowedToolsDesc": "Lista zablokowanych narzędzi po przecinku",
+        "skills": "Umiejętności",
+        "skillsDesc": "Lista umiejętności po przecinku",
+        "prompt": "Prompt systemowy",
+        "promptDesc": "Instrukcje dla agenta",
+        "promptPlaceholder": "Jesteś recenzentem kodu. Przeanalizuj podany kod pod kątem..."
+      }
+    },
+    "safety": "Bezpieczeństwo",
+    "loadUserSettings": {
+      "name": "Wczytuj ustawienia użytkownika",
+      "desc": "Wczytuj ~/.claude/settings.json. Po włączeniu reguły uprawnień z Claude Code mogą omijać tryb bezpieczny."
+    },
+    "claudeSafeMode": {
+      "name": "Tryb bezpieczny",
+      "desc": "Tryb uprawnień używany, gdy przełącznik Bezpieczny jest włączony."
+    },
+    "codexSafeMode": {
+      "name": "Tryb bezpieczny",
+      "desc": "Tryb piaskownicy używany, gdy przełącznik Bezpieczny jest włączony."
+    },
+    "environment": "Środowisko",
+    "customVariables": {
+      "name": "Własne zmienne",
+      "desc": "Zmienne środowiskowe dla SDK Claude (format KLUCZ=WARTOŚĆ, jedna na linię). Przedrostek export jest obsługiwany."
+    },
+    "envSnippets": {
+      "name": "Zestawy",
+      "addBtn": "Dodaj zestaw",
+      "noSnippets": "Nie masz zapisanych zestawów zmiennych. Kliknij +, żeby zapisać bieżącą konfigurację.",
+      "nameRequired": "Podaj nazwę zestawu",
+      "modal": {
+        "titleEdit": "Edytuj zestaw",
+        "titleSave": "Zapisz zestaw",
+        "name": "Nazwa",
+        "namePlaceholder": "Opisowa nazwa tej konfiguracji środowiska",
+        "description": "Opis",
+        "descPlaceholder": "Opis opcjonalny",
+        "envVars": "Zmienne środowiskowe",
+        "envVarsPlaceholder": "Format KLUCZ=WARTOŚĆ, jedna na linię (przedrostek export działa)",
+        "save": "Zapisz",
+        "update": "Zaktualizuj",
+        "cancel": "Anuluj"
+      }
+    },
+    "customModelOverrides": {
+      "name": "Własne ustawienia modeli",
+      "desc": "Ustaw skrócone nazwy i rozmiary okna kontekstu dla własnych modeli."
+    },
+    "customModelAliases": {
+      "placeholder": "Skrócona nazwa"
+    },
+    "customContextLimits": {
+      "name": "Własne limity kontekstu",
+      "desc": "Ustaw rozmiar okna kontekstu dla swoich modeli. Puste = domyślne 200 tys. tokenów.",
+      "invalid": "Zły format. Użyj: 256k, 1m albo dokładnej liczby (1000–10000000)."
+    },
+    "customModels": {
+      "name": "Własne modele",
+      "desc": "Dopisz kolejne identyfikatory modeli Claude do listy wyboru, jeden na linię. Modele narzucone przez zmienne środowiskowe i tak zastąpią listę.",
+      "placeholder": "claude-opus-4-6\nclaude-opus-4-5-20251101"
+    },
+    "enableChrome": {
+      "name": "Włącz rozszerzenie Chrome",
+      "desc": "Pozwól Claude'owi sterować Chrome przez rozszerzenie claude-in-chrome. Wymaga zainstalowanego rozszerzenia i restartu sesji."
+    },
+    "maxWarmAgentProcesses": {
+      "name": "Maksimum sesji uruchomionych naraz",
+      "desc": "Ile sesji agenta trzymać w gotowości (5–10). Starsze bezczynne wstrzymują się same i wracają przy użyciu."
+    },
+    "collabGitInstallation": {
+      "summary": "Pomoc przy konfiguracji Gita",
+      "requirement": "Współpraca w Claudianie wymaga natywnego Gita 2.38 lub nowszego na Twoim komputerze.",
+      "verify": "Poproś Claudiana, żeby sprawdził instalację:",
+      "prompt": "Sprawdź instalację Gita na tym komputerze.\n1. Napisz, czy Git jest zainstalowany, gdzie leży plik wykonywalny i jaka to wersja.\n2. Jeśli Gita nie ma, podpowiedz, jak go zainstalować na tym urządzeniu.\n3. Niczego nie instaluj ani nie zmieniaj."
+    },
+    "collabGitStatus": {
+      "checking": "Sprawdzam Gita…",
+      "available": "Znaleziono plik wykonywalny Gita",
+      "unavailable": "Nie znaleziono pliku wykonywalnego Gita"
+    },
+    "collabReadMore": "Przeczytaj więcej o trybie współpracy Claudiana",
+    "collabGitPath": {
+      "name": "Ścieżka do natywnego Gita",
+      "desc": "Opcjonalna pełna ścieżka do Gita dla trybu współpracy. Puste = wykryj automatycznie.",
+      "placeholder": "Wykryj Gita automatycznie"
+    },
+    "collabEnabled": {
+      "name": "Włącz współpracę",
+      "desc": "Włącz współpracę lokalną, odwołania do projektów wspólnych i środowisko agenta dla tego skarbca."
+    },
+    "collabProjectsFolder": {
+      "name": "Folder projektów",
+      "desc": "Folder w skarbcu na przyszłe projekty wspólne. Nie musisz go tworzyć — Claudian zrobi to przy pierwszym utworzeniu lub dołączeniu. Istniejące projekty zostają na miejscu.",
+      "placeholder": "workspace"
+    },
+    "enableDualPane": {
+      "name": "Włącz widok dwupanelowy",
+      "desc": "Pokazuj listę sesji obok czatu, gdy okno ma co najmniej 600 px szerokości."
+    },
+    "restoreTabsOnStartup": {
+      "name": "Przywracaj karty przy starcie",
+      "desc": "Otwórz ponownie wszystkie karty w widoku jednopanelowym albo ostatnio używaną w dwupanelowym."
+    },
+    "enableFilePane": {
+      "name": "Włącz panel plików",
+      "desc": "Pokaż zakładkę Pliki w dwupanelowej liście sesji."
+    },
+    "dualPaneSide": {
+      "name": "Strona drugiego panelu",
+      "desc": "Wybierz, po której stronie czatu pojawi się lista sesji.",
+      "left": "Lewa",
+      "right": "Prawa"
+    },
+    "enableAutoScroll": {
+      "name": "Przewijaj w trakcie odpowiedzi",
+      "desc": "Automatycznie zjeżdżaj na dół, gdy Claude pisze. Wyłącz, żeby zostać na górze i czytać od początku."
+    },
+    "deferMathRenderingDuringStreaming": {
+      "name": "Odkładaj składanie wzorów",
+      "desc": "Pokazuj surowy LaTeX w trakcie pisania, a wzory składaj dopiero po zakończeniu każdego bloku tekstu."
+    },
+    "expandFileEditsByDefault": {
+      "name": "Rozwijaj zmiany w plikach",
+      "desc": "Pokazuj różnice z Write i Edit od razu rozwinięte."
+    },
+    "chatViewPlacement": {
+      "name": "Otwieraj Claudiana w",
+      "desc": "Wybierz, gdzie ma się otwierać panel czatu",
+      "rightSidebar": "Prawym pasku bocznym",
+      "leftSidebar": "Lewym pasku bocznym",
+      "mainTab": "Głównej karcie edytora"
+    },
+    "cliPath": {
+      "name": "Ścieżka do CLI Claude'a",
+      "desc": "Własna ścieżka do Claude Code CLI. Puste = wykryj automatycznie.",
+      "descWindows": "Przy instalatorze natywnym podaj claude.exe. Przy npm/pnpm/yarn lub innym menedżerze pakietów podaj ścieżkę do cli-wrapper.cjs (nie claude.cmd).",
+      "descUnix": "Wklej wynik polecenia \"which claude\" — działa i dla instalacji natywnej, i dla npm/pnpm/yarn.",
+      "validation": {
+        "notExist": "Ścieżka nie istnieje",
+        "isDirectory": "Ścieżka wskazuje katalog, nie plik"
+      }
+    },
+    "language": {
+      "name": "Język",
+      "desc": "Zmień język interfejsu wtyczki"
+    },
+    "providerEnablement": {
+      "name": "Włącz {provider}",
+      "desc": "Udostępnij włączone modele {provider} w nowych rozmowach. Istniejące sesje zostają zachowane po wyłączeniu.",
+      "lastProviderWarning": "Przynajmniej jeden dostawca musi zostać włączony, żeby Claudian działał.",
+      "noModelsWarning": "Żaden model {provider} nie jest włączony. Przejdź niżej do Modele i włącz co najmniej jeden."
+    },
+    "codex": {
+      "installationMethod": {
+        "name": "Sposób instalacji",
+        "desc": "Jak Claudian ma uruchamiać Codeksa na Windowsie. Natywny Windows używa ścieżki do pliku .exe. WSL uruchamia linuksowe CLI w wybranej dystrybucji.",
+        "nativeWindows": "Natywny Windows",
+        "wsl": "WSL"
+      },
+      "cliPath": {
+        "name": "Ścieżka do CLI Codeksa",
+        "descUnix": "Własna ścieżka do lokalnego CLI Codeksa. Puste = najpierw znane instalacje, potem PATH.",
+        "descWindows": "Własna ścieżka do lokalnego CLI Codeksa. Puste = wykryj z PATH. Podaj natywną ścieżkę Windows, zwykle `codex.exe`.",
+        "descWsl": "Linuksowe polecenie albo pełna ścieżka do uruchomienia w WSL. Puste = szukaj w PATH wybranej dystrybucji.",
+        "validation": {
+          "wslWindowsPath": "Tryb WSL oczekuje polecenia lub ścieżki linuksowej, nie ścieżki do pliku .exe."
+        }
+      },
+      "wslDistroOverride": {
+        "name": "Wymuszona dystrybucja WSL",
+        "desc": "Opcja zaawansowana. Puste = rozpoznaj dystrybucję ze ścieżki roboczej WSL, a gdy się nie da, użyj domyślnej."
+      },
+      "safeMode": {
+        "workspaceWrite": "Zapis w obszarze roboczym",
+        "readOnly": "Tylko odczyt"
+      },
+      "customModels": {
+        "name": "Własne modele",
+        "desc": "Dopisz kolejne identyfikatory modeli Codeksa do listy wyboru, jeden na linię. Ustawiona zmienna `OPENAI_MODEL` nadal ma pierwszeństwo.",
+        "placeholder": "gpt-5.4\ngpt-5.3-codex-spark"
+      },
+      "reasoningSummary": {
+        "name": "Podsumowanie rozumowania",
+        "desc": "Pokazuj streszczenie toku rozumowania modelu w bloku myślenia.",
+        "auto": "Automatycznie",
+        "concise": "Zwięzłe",
+        "detailed": "Szczegółowe",
+        "off": "Wyłączone"
+      },
+      "ultraEffort": {
+        "name": "Włącz poziom ultra",
+        "desc": "Udostępnij Ultra w wyborze wysiłku dla modeli Codeksa, które to wspierają. Ultra używa maksymalnego rozumowania z automatycznym zlecaniem zadań."
+      },
+      "skills": {
+        "name": "Umiejętności Codeksa",
+        "desc": "Zarządzaj wspólnymi umiejętnościami skarbca — trzymanymi wyłącznie w .agents/skills/.",
+        "hiddenName": "Ukryte umiejętności",
+        "hiddenDesc": "Ukryj wybrane umiejętności Codeksa z listy rozwijanej. Wpisuj nazwy bez znaku $, jedna na linię.",
+        "hiddenPlaceholder": "analiza\nwyjasnij\nnapraw"
+      },
+      "subagents": {
+        "name": "Podagenci Codeksa",
+        "desc": "Zarządzaj podagentami Codeksa ze skarbca, z .codex/agents/. Każdy plik TOML to jeden własny agent."
+      },
+      "mcp": {
+        "descBeforeCommand": "Codex zarządza serwerami MCP przez własne CLI. Skonfiguruj przez ",
+        "descAfterCommand": " — będą dostępne w Claudianie. ",
+        "learnMore": "Dowiedz się więcej"
+      },
+      "environment": {
+        "name": "Środowisko Codeksa",
+        "desc": "Wyłącznie zmienne należące do Codeksa. Tu wpisuj ustawienia OPENAI_* i CODEX_*. Jeśli automatyczne wykrywanie Codeksa potrzebuje pomocy, dopisz katalog instalacji do wspólnego PATH, a nie do tej sekcji."
+      }
+    },
+    "agentSkills": {
+      "sectionTitle": "Umiejętności",
+      "fixedRoot": "Trzymane w .agents/skills",
+      "sharedExpectation": "Wspólnymi umiejętnościami zarządzaj w .agents/skills/ — dla zgodnych dostawców.",
+      "noSkills": "Nie masz wspólnych umiejętności. Kliknij +, żeby dodać.",
+      "skillBadge": "umiejętność",
+      "diagnosticsTitle": "Umiejętności wymagające uwagi",
+      "loadFailed": "Nie udało się wczytać wspólnych umiejętności.",
+      "savedRefreshFailed": "Zapisano, ale odświeżenie u dostawcy się nie powiodło.",
+      "validationFailed": "Nieprawidłowa umiejętność: {message}",
+      "collisionFailed": "Umiejętność o nazwie „{name}\" już istnieje.",
+      "saveFailed": "Nie udało się zapisać wspólnej umiejętności: {message}",
+      "deleteFailed": "Nie udało się przenieść wspólnej umiejętności do kosza: {message}",
+      "staleConflict": "Ta umiejętność zmieniła się gdzie indziej; odśwież przed zapisem.",
+      "created": "Wspólna umiejętność „{name}\" utworzona.",
+      "updated": "Wspólna umiejętność „{name}\" zaktualizowana.",
+      "deleted": "Wspólna umiejętność „{name}\" przeniesiona do kosza.",
+      "modal": {
+        "titleEdit": "Edytuj wspólną umiejętność",
+        "titleAdd": "Dodaj wspólną umiejętność",
+        "name": "Nazwa umiejętności",
+        "nameDesc": "Małe litery i cyfry rozdzielone pojedynczymi myślnikami",
+        "namePlaceholder": "recenzent-kodu",
+        "description": "Opis",
+        "descriptionDesc": "Wymagany, przenośny opis — po nim dostawcy wybierają umiejętność",
+        "descriptionPlaceholder": "Przegląda kod pod kątem poprawności i utrzymywalności",
+        "instructions": "Instrukcje",
+        "instructionsDesc": "Wymagana treść pliku SKILL.md",
+        "instructionsPlaceholder": "Przejrzyj podany kod i zgłoś konkretne znaleziska..."
+      },
+      "delete": {
+        "title": "Usuń wspólną umiejętność",
+        "description": "Cały folder umiejętności — razem ze skryptami, materiałami i zasobami — trafi do kosza.",
+        "confirm": "Przenieś do kosza"
+      }
+    },
+    "codexSkills": {
+      "modal": {
+        "titleEdit": "Edytuj umiejętność Codeksa",
+        "titleAdd": "Dodaj umiejętność Codeksa",
+        "directory": "Katalog",
+        "directoryDesc": "Gdzie zapisać umiejętność",
+        "skillName": "Nazwa umiejętności",
+        "skillNameDesc": "Nazwa używana po znaku $ (np. \"analiza\" dla $analiza)",
+        "description": "Opis",
+        "descriptionDesc": "Opcjonalny opis pokazywany na liście",
+        "instructions": "Instrukcje",
+        "instructionsDesc": "Treść instrukcji (zawartość SKILL.md)",
+        "instructionsPlaceholder": "Przeanalizuj kod pod kątem..."
+      },
+      "instructionsRequired": "Instrukcje są wymagane",
+      "saveFailed": "Nie udało się zapisać umiejętności Codeksa",
+      "header": "Umiejętności Codeksa",
+      "noSkills": "Brak umiejętności Codeksa w skarbcu. Kliknij +, żeby dodać.",
+      "skillBadge": "umiejętność",
+      "deleted": "Umiejętność Codeksa „{name}\" usunięta",
+      "deleteFailed": "Nie udało się usunąć umiejętności Codeksa",
+      "created": "Umiejętność Codeksa „{name}\" utworzona",
+      "updated": "Umiejętność Codeksa „{name}\" zaktualizowana"
+    },
+    "codexSubagents": {
+      "modal": {
+        "titleEdit": "Edytuj podagenta Codeksa",
+        "titleAdd": "Dodaj podagenta Codeksa",
+        "nameDesc": "Nazwa agenta używana przez Codeksa przy uruchomieniu (małe litery, myślniki, podkreślenia)",
+        "descriptionDesc": "Kiedy Codex ma sięgnąć po tego agenta",
+        "modelDesc": "Model narzucony temu agentowi (puste = dziedzicz)",
+        "namePlaceholder": "recenzent_kodu"
+      },
+      "reasoningEffort": {
+        "name": "Wysiłek rozumowania",
+        "desc": "Poziom rozumowania modelu",
+        "inherit": "Dziedzicz",
+        "low": "Niski",
+        "medium": "Średni",
+        "high": "Wysoki",
+        "xhigh": "Bardzo wysoki"
+      },
+      "sandboxMode": {
+        "name": "Tryb piaskownicy",
+        "desc": "Ograniczenia piaskownicy dla tego agenta",
+        "inherit": "Dziedzicz",
+        "readOnly": "Tylko odczyt",
+        "dangerFullAccess": "Pełny dostęp (niebezpieczne)",
+        "workspaceWrite": "Zapis w obszarze roboczym"
+      },
+      "nicknameCandidates": {
+        "name": "Proponowane pseudonimy",
+        "desc": "Pseudonimy wyświetlane, po przecinku (np. atlas, delta, echo)"
+      },
+      "developerInstructions": {
+        "name": "Instrukcje dla agenta",
+        "desc": "Główne instrukcje określające zachowanie agenta",
+        "placeholder": "Przeglądaj kod jak właściciel.\nStawiaj na poprawność, bezpieczeństwo i braki w testach.",
+        "required": "Instrukcje dla agenta są wymagane"
+      },
+      "validation": {
+        "nameRequired": "Nazwa podagenta jest wymagana",
+        "nameTooLong": "Nazwa podagenta może mieć najwyżej {count} znaków",
+        "nameInvalid": "Nazwa podagenta może zawierać tylko małe litery, cyfry, myślniki i podkreślenia",
+        "nicknameInvalid": "Pseudonimy mogą zawierać tylko litery ASCII, cyfry, spacje, myślniki i podkreślenia",
+        "nicknameDuplicate": "Pseudonimy nie mogą się powtarzać"
+      },
+      "header": "Podagenci Codeksa",
+      "noAgents": "Brak podagentów Codeksa w skarbcu. Kliknij +, żeby dodać."
+    }
+  },
+  "environmentPanel": {
+    "title": "Środowisko",
+    "loading": "Czytam konfigurację…",
+    "appliesNext": "Zmiany działają od następnej sesji.",
+    "mcp": "Serwery MCP",
+    "plugins": "Wtyczki",
+    "hooks": "Hooki",
+    "hooksEnabled": "Hooki włączone",
+    "outputStyle": "Styl odpowiedzi",
+    "default": "(domyślny)",
+    "skills": "Skille",
+    "skillsReadOnly": "tylko do odczytu — konfiguracja nie ma wyłącznika per skill",
+    "none": "Brak"
+  }
+}

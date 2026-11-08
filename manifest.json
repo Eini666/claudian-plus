@@ -1,0 +1,10 @@
+{
+  "id": "claudian-plus",
+  "name": "Claudian Plus",
+  "version": "2.2.6-plus.1",
+  "minAppVersion": "1.13.0",
+  "description": "Fork of Claudian with the full Claude Code preset (CLAUDE.md, rules, output styles), Polish interface, status avatar, built-in Telegram bot with voice messages (Piper TTS) and account switcher. Embeds Claude Code and other coding agents in your vault.",
+  "author": "Yishen Tu",
+  "authorUrl": "https://github.com/YishenTu",
+  "isDesktopOnly": true
+}

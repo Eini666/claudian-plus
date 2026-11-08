@@ -1,0 +1,244 @@
+import type { TurnStamps } from '../../utils/CacheWarmth';
+import type { PlanRateLimits } from './chat';
+
+export type HiddenProviderCommands = Record<string, string[]>;
+
+export interface ApprovalSelectionDecision {
+  type: 'select-option';
+  value: string;
+}
+
+/** User decision from the approval modal. */
+export type ApprovalDecision =
+  | 'allow'
+  | 'allow-always'
+  | 'deny'
+  | 'cancel'
+  | ApprovalSelectionDecision;
+
+/** Saved environment variable configuration. */
+export interface EnvSnippet {
+  id: string;
+  name: string;
+  description: string;
+  envVars: string;
+  scope?: EnvironmentScope;
+  contextLimits?: Record<string, number>;  // Optional: context limits for custom models
+  modelAliases?: Record<string, string>;   // Optional: display aliases for custom models
+}
+
+/** Source of a slash command. */
+export type SlashCommandSource = 'builtin' | 'user' | 'plugin' | 'sdk';
+
+/** Slash command configuration shared by the UI, storage, and runtime boundary. */
+export interface SlashCommand {
+  id: string;
+  name: string;                // Command name used after / (e.g., "review-code")
+  description?: string;        // Optional description shown in dropdown
+  argumentHint?: string;       // Placeholder text for arguments (e.g., "[file] [focus]")
+  allowedTools?: string[];     // Restrict tools when command is used
+  model?: string;              // Optional provider-specific model override
+  content: string;             // Prompt template with placeholders
+  source?: SlashCommandSource; // Origin of the command (builtin, user, plugin, sdk)
+  kind?: 'command' | 'skill';  // Explicit type — replaces id-prefix heuristic
+  // Provider-owned command metadata that the UI preserves and round-trips.
+  disableModelInvocation?: boolean;  // Disable model invocation for this skill
+  userInvocable?: boolean;           // Whether user can invoke this skill directly
+  context?: 'fork';                  // Subagent execution mode
+  agent?: string;                    // Subagent type when context='fork'
+  hooks?: Record<string, unknown>;   // Pass-through to SDK
+}
+
+/** Keyboard navigation settings for vim-style scrolling. */
+export interface KeyboardNavigationSettings {
+  scrollUpKey: string;         // Key to scroll up when focused on messages (default: 'w')
+  scrollDownKey: string;       // Key to scroll down when focused on messages (default: 's')
+  focusInputKey: string;       // Key to focus input (default: 'i', like vim insert mode)
+}
+
+export const CHAT_VIEW_PLACEMENTS = [
+  'right-sidebar',
+  'left-sidebar',
+  'main-tab',
+] as const;
+
+/** Workspace location used when opening the Claudian chat view. */
+export type ChatViewPlacement = typeof CHAT_VIEW_PLACEMENTS[number];
+
+export type SessionAutoArchiveAfter = 'off' | '7d' | '14d' | '30d';
+
+export const DEFAULT_ASSISTANT_NAME = 'Claude';
+
+/** Nazwa asystenta do pokazania; pusta albo nie-napis (stare/zepsute ustawienia) → domyslna. */
+export function resolveAssistantName(value: unknown): string {
+  return (typeof value === 'string' && value.trim()) || DEFAULT_ASSISTANT_NAME;
+}
+
+export const DUAL_PANE_SIDES = ['left', 'right'] as const;
+
+/** Side of the chat occupied by the session manager in dual-pane mode. */
+export type DualPaneSide = typeof DUAL_PANE_SIDES[number];
+
+export type SessionManagerOrganization = 'list' | 'linked-content';
+export type TelegramBridgeMode = 'builtin' | 'external';
+export type SessionManagerSort = 'last-updated' | 'created';
+
+export interface LegacyLinkedContentSettingsInput {
+  sessionManagerOrganization?: SessionManagerOrganization | 'linked-note';
+  pinnedLinkedNotePaths?: unknown;
+}
+
+/** Forced provider transition invalidated a parked auxiliary continuation. */
+export interface AuxiliaryContinuityReset {
+  success: false;
+  resetRequired: true;
+  error: string;
+  refinedInstruction?: never;
+  editedText?: never;
+  insertedText?: never;
+  clarification?: never;
+}
+
+/** Ordinary result from an instruction refinement agent query. */
+export interface InstructionRefineOutcome {
+  success: boolean;
+  resetRequired?: false;
+  refinedInstruction?: string;  // The refined instruction text
+  clarification?: string;       // Agent's clarifying question (if any)
+  error?: string;               // Error message (if failed)
+}
+
+export type InstructionRefineResult =
+  | InstructionRefineOutcome
+  | AuxiliaryContinuityReset;
+
+/** Permission mode for tool execution. */
+export type PermissionMode = 'yolo' | 'plan' | 'normal';
+
+/** Scope for environment variable storage and snippets. */
+export type EnvironmentScope = 'shared' | `provider:${string}`;
+
+/** Opaque device-keyed CLI paths for per-device configuration. */
+export type HostnameCliPaths = Record<string, string>;
+
+/** Opaque provider-owned settings bags keyed by provider id. */
+export type ProviderConfigMap = Partial<Record<string, Record<string, unknown>>>;
+
+/** Provider-qualified model explicitly selected in chat and used to seed future tabs. */
+export interface StoredChatModelSelection {
+  providerId: string;
+  model: string;
+}
+
+/**
+ * Application settings stored in .claudian/claudian-settings.json.
+ *
+ * Provider-specific fields (model, thinkingBudget, effortLevel, serviceTier, etc.) use
+ * `string` here.  The active provider casts internally when it needs
+ * narrower types.
+ */
+export interface ClaudianSettings {
+  // User preferences
+  userName: string;
+
+  // Security
+  permissionMode: PermissionMode;
+
+  // Model & thinking (provider interprets values)
+  model: string;
+  thinkingBudget: string;
+  effortLevel: string;
+  serviceTier: string;
+  enableAutoTitleGeneration: boolean;
+  titleGenerationLocale: string;
+  titleGenerationModel: string;
+
+  // Content settings
+  excludedTags: string[];
+  mediaFolder: string;
+  systemPrompt: string;
+  persistentExternalContextPaths: string[];
+
+  // Environment
+  sharedEnvironmentVariables: string;
+  envSnippets: EnvSnippet[];
+  customContextLimits: Record<string, number>;
+  customModelAliases: Record<string, string>;
+
+  // UI settings
+  keyboardNavigation: KeyboardNavigationSettings;
+  requireCommandOrControlEnterToSend: boolean;
+  /** Plywajacy awatar Ari na pulpicie, gdy Obsidian jest w tle. */
+  showAriWidget: boolean;
+  /** Wyswietlana nazwa asystenta (naglowek, plakietka); domyslnie „Claude”. */
+  assistantName: string;
+  /** Plakietka z nazwa na awatarze asystenta. */
+  showAvatarBadge: boolean;
+  /** Panel przelaczania kont Claude (zewnetrzny program); wylaczony = brak UI i odpytywania. */
+  accountSwitcherEnabled: boolean;
+  /** Adres panelu kont. */
+  accountsPanelUrl: string;
+  /** Most Telegrama; wylaczony = brak UI i odpytywania. */
+  telegramBridgeEnabled: boolean;
+  /** `builtin` = bot we wtyczce, `external` = zewnetrzny program pisze do folderu mostu. */
+  telegramBridgeMode: TelegramBridgeMode;
+  /** Folder wymiany plikow mostu Telegrama (w trybie wbudowanym pusty = `~/.claudian-plus/most`). */
+  telegramBridgeDir: string;
+  /** Glos Pipera dla glosowek. */
+  voiceName: string;
+  /** Model whisper.cpp do transkrypcji glosowek (`large-v3-turbo` albo `small`). */
+  whisperModel: string;
+  /** Podpowiedz nastepnej wiadomosci w pustym polu (SDK `promptSuggestions`). */
+  promptSuggestions: boolean;
+  /** Dogenerowywanie podpowiedzi lokalnie (Haiku), gdy CLI jej nie przysyla. */
+  promptSuggestionsLocal: boolean;
+
+  // Internationalization
+  locale: string;
+  /** Ostatnio widziane limity planu — zeby pasek nie byl pusty do pierwszej wymiany. */
+  lastPlanRateLimits?: PlanRateLimits | null;
+  /** Konto ostatniej tury per rozmowa — pigulka ciepla cache po restarcie Obsidiana. */
+  cacheTurnStamps?: TurnStamps;
+
+  // Provider-owned settings
+  providerConfigs: ProviderConfigMap;
+
+  // Provider selection
+  settingsProvider: string;  // ProviderId — which provider's model/effort/budget is projected to top-level fields
+  lastSelectedChatModel: StoredChatModelSelection | null;
+  savedProviderModel: Partial<Record<string, string>>;
+  savedProviderEffort: Partial<Record<string, string>>;
+  savedProviderServiceTier: Partial<Record<string, string>>;
+  savedProviderThinkingBudget: Partial<Record<string, string>>;
+  savedProviderPermissionMode: Partial<Record<string, string>>;
+
+  // Internal lifecycle state. Entries remain until all affected session metadata is durable.
+  pendingProviderSessionInvalidations: Partial<Record<string, number>>;
+
+  // State (provider-specific, round-tripped opaquely)
+  lastCustomModel?: string;
+
+  // UI preferences
+  maxWarmAgentProcesses: number;
+  enableAutoScroll: boolean;
+  deferMathRenderingDuringStreaming: boolean;
+  expandFileEditsByDefault: boolean;
+  /** Automatyczna archiwizacja nieaktywnych rozmow (upstream #1494). */
+  sessionAutoArchiveAfter?: SessionAutoArchiveAfter;
+  chatViewPlacement: ChatViewPlacement;
+  enableDualPane: boolean;
+  dualPaneSide: DualPaneSide;
+  restoreTabsOnStartup: boolean;
+  collabEnabled: boolean;
+  collabProjectsFolder: string;
+  collabGitPath: string;
+  sessionManagerOrganization?: SessionManagerOrganization;
+  sessionManagerSort?: SessionManagerSort;
+  pinnedLinkedContentPaths?: string[];
+
+  // Provider command visibility
+  hiddenProviderCommands: HiddenProviderCommands;
+
+  // Allow provider-specific extension fields
+  [key: string]: unknown;
+}

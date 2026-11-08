@@ -1,0 +1,209 @@
+/* Context usage meter (inline in toolbar) */
+
+.claudian-context-meter {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-inline-start: 8px;
+  cursor: default;
+}
+
+/* Custom tooltip */
+.claudian-context-meter::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-bottom: 6px;
+  padding: 4px 8px;
+  font-size: 11px;
+  color: var(--text-normal);
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 4px;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.15s ease, visibility 0.15s ease;
+  pointer-events: none;
+  z-index: 100;
+}
+
+.claudian-context-meter:hover::after {
+  opacity: 1;
+  visibility: visible;
+}
+
+.claudian-context-meter-gauge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+}
+
+.claudian-context-meter-gauge svg {
+  width: 16px;
+  height: 16px;
+}
+
+.claudian-meter-bg {
+  stroke: var(--background-modifier-border);
+}
+
+.claudian-meter-fill {
+  stroke: var(--claudian-brand);
+  transition: stroke-dashoffset 0.3s ease, stroke 0.3s ease;
+}
+
+.claudian-context-meter-percent {
+  font-size: 11px;
+  color: var(--claudian-brand);
+  min-width: 24px;
+  text-align: end;
+  transition: color 0.3s ease;
+}
+
+/* Warning state (> 80%) - pale red */
+.claudian-context-meter.warning .claudian-meter-fill {
+  stroke: #E57373;
+}
+
+.claudian-context-meter.warning .claudian-context-meter-percent {
+  color: #E57373;
+}
+
+/* Limity planu (5h / 7d) — obok licznika kontekstu.
+   Procent i czas do resetu widoczne bez najezdzania. */
+.claudian-plan-limits {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-inline-start: 10px;
+  font-size: var(--font-ui-smaller, 11px);
+  color: var(--text-muted);
+  cursor: default;
+}
+
+.claudian-plan-limit {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.claudian-plan-limit-label {
+  opacity: 0.75;
+}
+
+.claudian-plan-limit-track {
+  width: 32px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--background-modifier-border);
+  overflow: hidden;
+}
+
+.claudian-plan-limit-fill {
+  height: 100%;
+  width: 0;
+  border-radius: 2px;
+  background: var(--claudian-brand);
+  transition: width 0.3s ease, background-color 0.3s ease;
+}
+
+/* Pojedyncze okno blisko wyczerpania. */
+.claudian-plan-limit-fill.claudian-plan-limit-high {
+  background: var(--text-warning, #d99757);
+}
+
+/* Ostrzezenie i odciecie dotycza calego zestawu, nie jednego okna. */
+.claudian-plan-limits-warning .claudian-plan-limit-text {
+  color: var(--text-warning, #d99757);
+}
+
+.claudian-plan-limits-rejected .claudian-plan-limit-text,
+.claudian-plan-limits-rejected .claudian-plan-limit-label {
+  color: var(--text-error, #d45d5d);
+}
+
+.claudian-plan-limits-rejected .claudian-plan-limit-fill {
+  background: var(--text-error, #d45d5d);
+}
+
+/* Pigulka ciepla cache rozmowy — na ktorym koncie zyje i ile minut zostalo.
+   Szczegoly (koszt tury tu / po przelaczeniu) w tooltipie. */
+.claudian-cache-pill {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  margin-inline-start: 10px;
+  padding: 1px 6px;
+  border-radius: var(--radius-s, 4px);
+  border: 1px solid var(--background-modifier-border);
+  font-size: var(--claudian-pasek, var(--font-ui-smaller, 11px));
+  color: var(--text-muted);
+  white-space: nowrap;
+  cursor: default;
+}
+
+.claudian-cache-pill-icon {
+  display: flex;
+}
+
+.claudian-cache-pill-icon svg {
+  width: 0.95em;
+  height: 0.95em;
+}
+
+.claudian-cache-pill.is-warm .claudian-cache-pill-icon {
+  color: var(--color-green, #4caf50);
+}
+
+/* Cache na innym koncie niz aktywne — nastepna tura zaplaci pelny zapis. */
+.claudian-cache-pill.is-mismatch {
+  color: var(--text-warning, #d99757);
+  border-color: var(--text-warning, #d99757);
+}
+
+.claudian-cache-pill.is-cold {
+  opacity: 0.7;
+}
+
+/* Plakietka aktywnego konta — klik otwiera menu przelaczania.
+   Rozmiar idzie za --claudian-pasek ze snippetu czytelnosci, gdy jest ustawiony. */
+.claudian-account-switcher {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-inline-start: 10px;
+  padding: 1px 6px;
+  border-radius: var(--radius-s, 4px);
+  border: 1px solid var(--background-modifier-border);
+  font-size: var(--claudian-pasek, var(--font-ui-smaller, 11px));
+  color: var(--text-muted);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.claudian-account-switcher:hover,
+.claudian-account-switcher:focus-visible {
+  color: var(--text-normal);
+  border-color: var(--claudian-brand);
+}
+
+.claudian-account-chevron {
+  display: flex;
+}
+
+.claudian-account-chevron svg {
+  width: 0.9em;
+  height: 0.9em;
+}
+
+.claudian-account-switcher.is-busy {
+  opacity: 0.5;
+  cursor: progress;
+}
