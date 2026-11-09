@@ -147,6 +147,7 @@ function createFixture(overrides: Record<string, unknown> = {}) {
         return el;
       }),
       appendInterruptIndicator: jest.fn(),
+      foldInterruptedTurn: jest.fn(),
       refreshActionButtons: jest.fn(),
       removeMessage: jest.fn(),
       updateLiveUserMessage: jest.fn(),
@@ -749,6 +750,33 @@ describe('InputController coordinator execution', () => {
 
       const assistantMsgEl = jest.mocked(fixture.deps.renderer.addMessage).mock.results.at(-1)?.value;
       expect(assistantMsgEl?.querySelector('.claudian-response-footer')).toBeNull();
+    } finally {
+      nowSpy.mockRestore();
+    }
+  });
+
+  it('folds a cancelled turn after hiding the thinking indicator, without a duration footer', async () => {
+    let currentTime = 1000;
+    const nowSpy = jest.spyOn(performance, 'now').mockImplementation(() => currentTime);
+    try {
+      const fixture = createFixture();
+      fixture.coordinator.execute.mockImplementationOnce(async () => {
+        currentTime += 1500;
+        return { accepted: true, planCompleted: false, status: 'cancelled' };
+      });
+
+      await fixture.controller.sendMessage({ content: 'test request' });
+
+      const assistantMessage = fixture.state.messages[1];
+      expect(assistantMessage.isInterrupt).toBe(true);
+      expect(assistantMessage.durationSeconds).toBeUndefined();
+      const fold = jest.mocked(fixture.deps.renderer.foldInterruptedTurn);
+      expect(fold).toHaveBeenCalledTimes(1);
+      expect(fixture.deps.renderer.appendInterruptIndicator).not.toHaveBeenCalled();
+      const hide = jest.mocked(fixture.deps.streamController.hideThinkingIndicator);
+      const lastHideBeforeFold = hide.mock.invocationCallOrder
+        .filter(order => order < fold.mock.invocationCallOrder[0]);
+      expect(lastHideBeforeFold.length).toBeGreaterThan(0);
     } finally {
       nowSpy.mockRestore();
     }

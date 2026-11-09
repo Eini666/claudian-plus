@@ -339,6 +339,47 @@ body.mod-windows .claudian-message-assistant {
   color: var(--text-muted);
 }
 
+.claudian-interrupted-turn-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  padding: 4px 0;
+  cursor: pointer;
+}
+
+.claudian-interrupted-turn-header:hover .claudian-interrupted-hint,
+.claudian-interrupted-turn-header:hover .claudian-interrupted-turn-chevron {
+  color: var(--text-normal);
+}
+
+.claudian-interrupted-turn-header:focus-visible {
+  outline: 2px solid var(--interactive-accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.claudian-interrupted-turn-chevron {
+  color: var(--text-faint);
+  transition: transform 0.15s ease;
+}
+
+.claudian-interrupted-turn.expanded .claudian-interrupted-turn-chevron {
+  transform: rotate(90deg);
+}
+
+.claudian-interrupted-turn-content {
+  margin: 4px 0 0 7px;
+  padding-inline-start: 17px;
+  border-inline-start: 2px solid var(--background-modifier-border);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .claudian-interrupted-turn-chevron {
+    transition: none;
+  }
+}
+
 .claudian-text-block {
   position: relative;
   margin: 0;

@@ -163,6 +163,146 @@ describe('MessageRenderer', () => {
   });
 
   // ============================================
+  // renderMessages: interrupted turn folding (port upstream #1702)
+  // ============================================
+
+  describe('interrupted turn folding', () => {
+    const interruptMarker = (id = 'marker'): ChatMessage => ({
+      id,
+      role: 'user',
+      content: '[Request interrupted by user]',
+      timestamp: Date.now(),
+      isInterrupt: true,
+    });
+    const partialTurn = (extra: Partial<ChatMessage> = {}): ChatMessage => ({
+      id: 'a1',
+      role: 'assistant',
+      content: 'Partial answer',
+      timestamp: Date.now(),
+      toolCalls: [{ id: 'tool-1', name: 'Read', input: { file_path: 'a.md' }, status: 'completed' }],
+      contentBlocks: [
+        { type: 'text', content: 'Partial answer' },
+        { type: 'tool_use', toolId: 'tool-1' },
+      ],
+      ...extra,
+    });
+    const assistantEls = (messagesEl: any) =>
+      messagesEl.children.filter((el: any) => el.hasClass('claudian-message-assistant'));
+
+    beforeEach(() => {
+      (renderStoredToolCall as jest.Mock).mockImplementation((parent: any) =>
+        parent.createDiv({ cls: 'claudian-tool-call' }));
+    });
+
+    afterEach(() => {
+      (renderStoredToolCall as jest.Mock).mockReset();
+    });
+
+    it('folds the partial turn under the following interrupt marker without a separate line', () => {
+      const { renderer, messagesEl } = createRenderer();
+
+      renderer.renderMessages([partialTurn(), interruptMarker()], () => 'Hi');
+
+      const assistants = assistantEls(messagesEl);
+      expect(assistants).toHaveLength(1);
+      const contentEl = assistants[0].children[0];
+      expect(contentEl.children).toHaveLength(1);
+      const wrapperEl = contentEl.children[0];
+      expect(wrapperEl.hasClass('claudian-interrupted-turn')).toBe(true);
+      const headerEl = wrapperEl.querySelector('.claudian-interrupted-turn-header')!;
+      expect(headerEl.querySelector('.claudian-interrupted')?.textContent).toBe('Interrupted');
+      const bodyEl = wrapperEl.querySelector('.claudian-interrupted-turn-content')!;
+      expect(bodyEl.hasClass('claudian-hidden')).toBe(true);
+      expect(bodyEl.querySelector('.claudian-text-block')).not.toBeNull();
+      expect(bodyEl.querySelector('.claudian-tool-call')).not.toBeNull();
+    });
+
+    it('expands on header click without repeating the indicator in the body', () => {
+      const { renderer, messagesEl } = createRenderer();
+
+      renderer.renderMessages([partialTurn(), interruptMarker()], () => 'Hi');
+
+      const wrapperEl = assistantEls(messagesEl)[0].children[0].children[0];
+      const headerEl = wrapperEl.querySelector('.claudian-interrupted-turn-header')!;
+      const bodyEl = wrapperEl.querySelector('.claudian-interrupted-turn-content')!;
+      headerEl.click();
+      expect(bodyEl.hasClass('claudian-hidden')).toBe(false);
+      expect(headerEl.getAttribute('aria-expanded')).toBe('true');
+      expect(bodyEl.querySelector('.claudian-interrupted')).toBeNull();
+    });
+
+    it('folds once when the assistant is already interrupted and a marker follows', () => {
+      const { renderer, messagesEl } = createRenderer();
+
+      renderer.renderMessages([partialTurn({ isInterrupt: true }), interruptMarker()], () => 'Hi');
+
+      const assistants = assistantEls(messagesEl);
+      expect(assistants).toHaveLength(1);
+      expect(assistants[0].querySelectorAll('.claudian-interrupted-turn')).toHaveLength(1);
+    });
+
+    it('renders a marker with no preceding assistant content as a plain line', () => {
+      const { renderer, messagesEl } = createRenderer();
+
+      renderer.renderMessages([interruptMarker()], () => 'Hi');
+
+      const assistants = assistantEls(messagesEl);
+      expect(assistants).toHaveLength(1);
+      expect(assistants[0].querySelector('.claudian-interrupted-turn')).toBeNull();
+      expect(assistants[0].querySelector('.claudian-interrupted')?.textContent).toBe('Interrupted');
+    });
+
+    it('renders a marker after a user message as a plain line', () => {
+      const { renderer, messagesEl } = createRenderer();
+      jest.spyOn(renderer, 'renderContent').mockResolvedValue(undefined);
+
+      renderer.renderMessages([
+        { id: 'u1', role: 'user', content: 'Do it', timestamp: Date.now() },
+        interruptMarker(),
+      ], () => 'Hi');
+
+      const assistants = assistantEls(messagesEl);
+      expect(assistants).toHaveLength(1);
+      expect(assistants[0].querySelector('.claudian-interrupted-turn')).toBeNull();
+      expect(assistants[0].querySelector('.claudian-interrupted')).not.toBeNull();
+    });
+
+    it('keeps rewind/fork eligibility indexed on the original message array', () => {
+      const { renderer } = createRenderer();
+      const spy = jest.spyOn(renderer, 'renderStoredMessage');
+      const messages = [partialTurn(), interruptMarker()];
+
+      renderer.renderMessages(messages, () => 'Hi');
+
+      expect(spy).toHaveBeenCalledTimes(1);
+      expect(spy).toHaveBeenCalledWith(messages[0], messages, 0, true);
+    });
+
+    it('leaves a completed turn unfolded with its duration footer', () => {
+      const { renderer, messagesEl } = createRenderer();
+
+      renderer.renderMessages([partialTurn({ durationSeconds: 42 })], () => 'Hi');
+
+      const assistant = assistantEls(messagesEl)[0];
+      expect(assistant.querySelector('.claudian-interrupted-turn')).toBeNull();
+      expect(assistant.querySelector('.claudian-response-footer')).not.toBeNull();
+    });
+
+    it('renders an empty interrupted assistant message as a plain line', () => {
+      const { renderer, messagesEl } = createRenderer();
+
+      renderer.renderMessages([
+        { id: 'a-empty', role: 'assistant', content: '', timestamp: Date.now(), isInterrupt: true },
+      ], () => 'Hi');
+
+      const assistants = assistantEls(messagesEl);
+      expect(assistants).toHaveLength(1);
+      expect(assistants[0].querySelector('.claudian-interrupted-turn')).toBeNull();
+      expect(assistants[0].querySelector('.claudian-interrupted')).not.toBeNull();
+    });
+  });
+
+  // ============================================
   // renderStoredMessage
   // ============================================
 
@@ -213,12 +353,16 @@ describe('MessageRenderer', () => {
     const msgEl = messagesEl.children[0];
     expect(msgEl.hasClass('claudian-message-assistant')).toBe(true);
 
-    // The content div should have both content rendering and an interrupt indicator
+    // Content is folded under the interrupt indicator header (port upstream #1702)
     const contentEl = msgEl.children[0];
-    const lastChild = contentEl.children[contentEl.children.length - 1];
-    const interruptedEl = lastChild.children[0];
-    expect(interruptedEl.hasClass('claudian-interrupted')).toBe(true);
-    expect(interruptedEl.textContent).toBe('Interrupted');
+    expect(contentEl.children.length).toBe(1);
+    const wrapperEl = contentEl.children[0];
+    expect(wrapperEl.hasClass('claudian-interrupted-turn')).toBe(true);
+    const interruptedEl = wrapperEl.querySelector('.claudian-interrupted');
+    expect(interruptedEl?.textContent).toBe('Interrupted');
+    const bodyEl = wrapperEl.querySelector('.claudian-interrupted-turn-content')!;
+    expect(bodyEl.hasClass('claudian-hidden')).toBe(true);
+    expect(bodyEl.querySelector('.claudian-text-block')).not.toBeNull();
   });
 
   it('renders persisted citation content blocks', () => {
@@ -271,9 +415,10 @@ describe('MessageRenderer', () => {
       expect.anything()
     );
     const contentEl = messagesEl.children[0].children[0];
-    const indicatorEl = contentEl.children[contentEl.children.length - 1];
-    expect(indicatorEl.children[0].hasClass('claudian-interrupted')).toBe(true);
-    expect(indicatorEl.children[0].textContent).toBe('Interrupted');
+    const headerEl = contentEl.querySelector('.claudian-interrupted-turn-header')!;
+    const interruptedEl = headerEl.querySelector('.claudian-interrupted');
+    expect(interruptedEl?.hasClass('claudian-interrupted')).toBe(true);
+    expect(interruptedEl?.textContent).toBe('Interrupted');
   });
 
   it('renders bare interrupt marker for empty interrupted assistant message', () => {

@@ -42,6 +42,10 @@ import {
   prepareDisplayOnlyCodeFences,
   restoreDisplayOnlyCodeFences,
 } from './DisplayOnlyCodeFences';
+import {
+  appendInterruptIndicator as appendInterruptIndicatorEl,
+  foldInterruptedTurn as foldInterruptedTurnEl,
+} from './InterruptedTurnFold';
 import { resolveSubagentAdapter } from './subagentAdapterResolution';
 import {
   renderStoredAsyncSubagent,
@@ -273,7 +277,16 @@ export class MessageRenderer {
     const newWelcomeEl = createWelcomeElement(this.messagesEl, getGreeting());
 
     for (let i = 0; i < messages.length; i++) {
-      this.renderStoredMessage(messages[i], messages, i);
+      // Claude history stores the interrupt as a separate user marker after the partial turn:
+      // fold that turn under the marker instead of rendering the marker as its own line.
+      const prev = messages[i - 1];
+      if (
+        this.isInterruptMarker(messages[i])
+        && (this.canFoldIntoMarker(prev) || (prev?.role === 'assistant' && prev.isInterrupt))
+      ) continue;
+      const foldAsInterrupted = this.isInterruptMarker(messages[i + 1])
+        && this.canFoldIntoMarker(messages[i]);
+      this.renderStoredMessage(messages[i], messages, i, foldAsInterrupted);
     }
 
     this.scrollToBottomOnceLaidOut();
@@ -304,7 +317,23 @@ export class MessageRenderer {
     this.pendingLayoutScroll = null;
   }
 
-  renderStoredMessage(msg: ChatMessage, allMessages?: ChatMessage[], index?: number): void {
+  private isInterruptMarker(msg: ChatMessage | undefined): boolean {
+    return !!msg && msg.role === 'user' && !!msg.isInterrupt;
+  }
+
+  private canFoldIntoMarker(msg: ChatMessage | undefined): boolean {
+    return !!msg
+      && msg.role === 'assistant'
+      && !msg.contentBlocks?.some(b => b.type === 'context_compacted')
+      && this.hasVisibleContent(msg);
+  }
+
+  renderStoredMessage(
+    msg: ChatMessage,
+    allMessages?: ChatMessage[],
+    index?: number,
+    foldAsInterrupted = false,
+  ): void {
     // Bare interrupt marker: user-role interrupts (Claude bracket markers) always render
     // as a standalone indicator. Assistant-role interrupts (Codex partial responses)
     // only use the bare marker when there's no content to preserve.
@@ -363,8 +392,8 @@ export class MessageRenderer {
       }
     } else if (msg.role === 'assistant') {
       const hadLegacyInterruptIndicator = this.renderAssistantContent(msg, contentEl);
-      if (msg.isInterrupt || hadLegacyInterruptIndicator) {
-        this.appendInterruptIndicator(contentEl);
+      if (msg.isInterrupt || hadLegacyInterruptIndicator || foldAsInterrupted) {
+        this.foldInterruptedTurn(contentEl);
       }
     }
   }
@@ -407,13 +436,12 @@ export class MessageRenderer {
   }
 
   appendInterruptIndicator(contentEl: HTMLElement): void {
-    const textEl = contentEl.createDiv({ cls: 'claudian-text-block' });
-    textEl.createSpan({ cls: 'claudian-interrupted', text: 'Interrupted' });
-    textEl.appendText(' ');
-    textEl.createSpan({
-      cls: 'claudian-interrupted-hint',
-      text: '\u00B7 What should Claudian do instead?',
-    });
+    appendInterruptIndicatorEl(contentEl);
+  }
+
+  /** Single entry point for folding an interrupted turn (stored and live). */
+  foldInterruptedTurn(contentEl: HTMLElement): void {
+    foldInterruptedTurnEl(contentEl);
   }
 
   /**

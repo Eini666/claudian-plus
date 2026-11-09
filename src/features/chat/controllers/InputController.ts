@@ -634,13 +634,14 @@ export class InputController {
           && state.streamGeneration === streamGeneration
         ) {
           didCancelThisTurn = wasInterrupted || state.cancelRequested;
+          // Przed zwinieciem: wskaznik "mysli..." nie moze trafic do zwinietej tury.
+          streamController.hideThinkingIndicator();
           if (didCancelThisTurn && !state.pendingNewSessionPlan) {
             finalAssistantMsg.isInterrupt = true;
             if (state.currentContentEl) {
-              renderer.appendInterruptIndicator(state.currentContentEl);
+              renderer.foldInterruptedTurn(state.currentContentEl);
             }
           }
-          streamController.hideThinkingIndicator();
           state.isStreaming = false;
           state.cancelRequested = false;
 
