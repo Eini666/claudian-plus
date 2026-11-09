@@ -1,5 +1,5 @@
 import type { PlanRateLimits } from '@/core/types';
-import { formatResumeTime, resolveLimitWait } from '@/features/chat/services/limitWait';
+import { formatResumeTime, markLimitReached, resolveLimitWait } from '@/features/chat/services/limitWait';
 
 const NOW = 1_800_000_000;
 
@@ -20,6 +20,16 @@ describe('resolveLimitWait', () => {
       sevenDay: { percentage: 100, resetsAt: NOW + 86_400 },
     };
     expect(resolveLimitWait(limits, null, NOW)).toEqual({ resumesAt: NOW + 86_400 });
+  });
+
+  it('waits for the fullest window when the rejection comes just below 100%', () => {
+    // 09.11: CLI odmowil przy 5h ~99%, karta pokazala reset tygodniowy (niedziela).
+    const limits: PlanRateLimits = {
+      status: 'rejected',
+      fiveHour: { percentage: 99, resetsAt: NOW + 3600 },
+      sevenDay: { percentage: 15, resetsAt: NOW + 6 * 86_400 },
+    };
+    expect(resolveLimitWait(limits, null, NOW)).toEqual({ resumesAt: NOW + 3600 });
   });
 
   it('ignores a remembered rejection whose window has already reset', () => {
@@ -43,5 +53,44 @@ describe('formatResumeTime', () => {
     expect(formatResumeTime(today, now)).toBe('12:21');
     expect(formatResumeTime(monday, now)).toMatch(/12:21$/);
     expect(formatResumeTime(monday, now)).not.toBe('12:21');
+  });
+});
+
+describe('markLimitReached', () => {
+  it('fills the five-hour window whose reset matches the retry time', () => {
+    const limits: PlanRateLimits = {
+      status: 'allowed_warning',
+      fiveHour: { percentage: 83, resetsAt: NOW + 3600 },
+      sevenDay: { percentage: 50, resetsAt: NOW + 3 * 86_400 },
+    };
+    expect(markLimitReached(limits, NOW + 3601, NOW)).toEqual({
+      status: 'rejected',
+      fiveHour: { percentage: 100, resetsAt: NOW + 3600 },
+      sevenDay: { percentage: 50, resetsAt: NOW + 3 * 86_400 },
+    });
+  });
+
+  it('fills the weekly window when the retry is days away', () => {
+    const limits: PlanRateLimits = { fiveHour: { percentage: 40, resetsAt: NOW + 7200 } };
+    expect(markLimitReached(limits, NOW + 2 * 86_400, NOW)).toEqual({
+      status: 'rejected',
+      fiveHour: { percentage: 40, resetsAt: NOW + 7200 },
+      sevenDay: { percentage: 100, resetsAt: NOW + 2 * 86_400 },
+    });
+  });
+
+  it('builds the window from the retry time when no limits are known yet', () => {
+    expect(markLimitReached(null, NOW + 1800, NOW)).toEqual({
+      status: 'rejected',
+      fiveHour: { percentage: 100, resetsAt: NOW + 1800 },
+    });
+  });
+
+  it('returns null when the bar already shows the rejection', () => {
+    const limits: PlanRateLimits = {
+      status: 'rejected',
+      fiveHour: { percentage: 100, resetsAt: NOW + 3600 },
+    };
+    expect(markLimitReached(limits, NOW + 3601, NOW)).toBeNull();
   });
 });

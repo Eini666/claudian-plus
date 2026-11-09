@@ -11,6 +11,7 @@ import {
   providerOutputEventToStreamChunk,
 } from '../controllers/StreamController';
 import type { ChatExecutionEventContext } from '../execution/ChatExecutionCoordinator';
+import { markLimitReached } from '../services/limitWait';
 import { updatePlanModeUI } from './TabProviderState';
 import type { AssembledTabRuntime } from './types';
 
@@ -58,6 +59,9 @@ async function handleTabSessionEvent(
   }
   if (event.type === 'usage_limit_retry') {
     tab.state.limitRetryAt = event.retryAt;
+    // Pasek pokazuje blokade od razu, zamiast odczytu panelu sprzed kilku minut.
+    const marked = markLimitReached(tab.state.planRateLimits, event.retryAt, Math.floor(Date.now() / 1000));
+    if (marked) tab.state.planRateLimits = marked;
     return;
   }
 
