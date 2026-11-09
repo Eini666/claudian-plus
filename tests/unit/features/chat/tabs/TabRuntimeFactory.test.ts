@@ -1792,6 +1792,15 @@ describe('Tab provider execution ownership', () => {
     expect(tab.state.attention).toBeNull();
   });
 
+  it('does not cool a tab with a running async subagent', async () => {
+    const tab = await createTestTab({ plugin: createPlugin(), containerEl: createMockEl() as any });
+    expect(coordinatorDeps[0].warmExecution?.canCool()).toBe(true);
+
+    jest.spyOn(tab.services.subagentManager, 'hasActiveAsyncSubagents').mockReturnValue(true);
+
+    expect(coordinatorDeps[0].warmExecution?.canCool()).toBe(false);
+  });
+
   it('allows review-only tabs to cool', async () => {
     const plugin = createPlugin();
     const tab = await createTestTab({ plugin, containerEl: createMockEl() as any });

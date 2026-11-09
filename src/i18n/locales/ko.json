@@ -120,6 +120,12 @@
       "hiNameHowAreYou": "Hi {name}, how are you?",
       "nameReturns": "{name} returns!",
       "absolutelyRight": "You are absolutely right!"
+    },
+    "backgroundSwitch": {
+      "title": "Background tasks are still running",
+      "message": "Background tasks (agents or commands) are running in this conversation. Switching the conversation in this tab will stop them.",
+      "openNewTab": "Open in a new tab",
+      "switchAnyway": "Switch anyway"
     }
   },
   "collab": {

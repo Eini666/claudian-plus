@@ -404,6 +404,7 @@ function createTabExecutionCoordinator(
           && !state.isRewinding
           && !state.requiresAction
           && tab.session.activeTurn === null
+          && !tab.services.subagentManager.hasActiveAsyncSubagents()
           && tab.lifecycleState !== 'closing';
       },
       onWarmStateChanged: (isWarm) => {

@@ -14,6 +14,7 @@ import type {
 } from '../../../core/providers/types';
 import type { Conversation, SlashCommand } from '../../../core/types';
 import { t } from '../../../i18n/i18n';
+import { chooseBackgroundWorkSwitch } from '../../../shared/modals/BackgroundWorkSwitchModal';
 import { chooseForkTarget } from '../../../shared/modals/ForkTargetModal';
 import { throwIfAborted, toAbortError } from '../../../utils/abort';
 import { scheduleAnimationFrame } from '../../../utils/animationFrame';
@@ -1133,6 +1134,11 @@ export class TabManager implements TabManagerInterface {
       || tab.services.subagentManager.hasActiveAsyncSubagents();
   }
 
+  private hasLiveBackgroundTasks(tab: AssembledTabRuntime): boolean {
+    return tab.executionCoordinator.hasLiveBackgroundTasks
+      || tab.services.subagentManager.hasActiveAsyncSubagents();
+  }
+
   /** Reconciles blank drafts after provider/model availability changes. */
   reconcileProviderAvailability(): void {
     for (const tab of this.tabs.values()) {
@@ -1483,6 +1489,15 @@ export class TabManager implements TabManagerInterface {
       ? preferredTab
       : Array.from(this.tabs.values()).find(tab => this.isTabAlive(tab)) ?? null;
     if (activeTab) {
+      // Przełączenie w tej karcie zamyka jej proces CLI razem z zadaniami w tle.
+      if (activeTab.conversationId !== conversationId && this.hasLiveBackgroundTasks(activeTab)) {
+        const choice = await chooseBackgroundWorkSwitch(this.plugin.app, this.canCreateTab());
+        if (!choice || !this.isConversationNavigationCurrent(requestRevision, sourceTab)) return;
+        if (choice === 'new-tab') {
+          await this.createTab(conversationId, undefined, { activate, lifecycleState: 'cold' });
+          return;
+        }
+      }
       await activeTab.controllers.conversationController.switchTo(conversationId);
       if (
         this.isConversationNavigationCurrent(requestRevision, sourceTab)
@@ -1503,6 +1518,14 @@ export class TabManager implements TabManagerInterface {
   async createNewConversation(): Promise<void> {
     const activeTab = this.getActiveTab();
     if (activeTab) {
+      if (this.hasLiveBackgroundTasks(activeTab)) {
+        const choice = await chooseBackgroundWorkSwitch(this.plugin.app, this.canCreateTab());
+        if (!choice || this.destroyed) return;
+        if (choice === 'new-tab') {
+          await this.createTab(null);
+          return;
+        }
+      }
       await activeTab.controllers.conversationController.createNew();
       // Sync tab.conversationId with the newly created conversation
       activeTab.conversationId = activeTab.state.currentConversationId;

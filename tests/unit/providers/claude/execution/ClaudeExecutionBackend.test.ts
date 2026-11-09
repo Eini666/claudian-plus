@@ -178,6 +178,33 @@ describe('ClaudeExecutionBackend', () => {
     jest.restoreAllMocks();
   });
 
+  it('blocks idle release while Claude Code reports a live background task', async () => {
+    const session = new ClaudeExecutionBackend(createHost(), createServices().services)
+      .createSession(createConfig());
+    const tasksChanged = (tasks: unknown[]) => ({
+      type: 'system',
+      subtype: 'background_tasks_changed',
+      session_id: 'session-1',
+      uuid: 'tasks',
+      tasks,
+    }) as unknown as sdkModule.SDKMessage;
+    const shell = { task_id: 'shell', task_type: 'local_bash', description: 'Wait for the build' };
+    try {
+      expect(session.blocksIdleRelease()).toBe(false);
+      await session.handleNativeMessage(tasksChanged([shell]), 1);
+      expect(session.blocksIdleRelease()).toBe(true);
+      // REPLACE semantics: pusta lista zdejmuje blokade.
+      await session.handleNativeMessage(tasksChanged([]), 1);
+      expect(session.blocksIdleRelease()).toBe(false);
+      await session.handleNativeMessage(tasksChanged([shell]), 1);
+      // Nowy proces CLI startuje bez zadan w tle i nic o tym nie emituje.
+      session.handleNativeQueryOpened({} as sdkModule.Query);
+      expect(session.blocksIdleRelease()).toBe(false);
+    } finally {
+      await session.dispose();
+    }
+  });
+
   it('creates a persistent session that normalizes SDK output and publishes commands', async () => {
     sdkMock.setMockSupportedCommands([
       { name: 'review', description: 'Review changes', argumentHint: '[path]' },

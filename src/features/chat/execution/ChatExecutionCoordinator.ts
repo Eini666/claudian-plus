@@ -261,6 +261,11 @@ export class ChatExecutionCoordinator {
     return (this.sessionBinding?.backgroundSequences.size ?? 0) > 0;
   }
 
+  /** Także zadania w tle, które jeszcze nic nie wypisały (Bash run_in_background). */
+  get hasLiveBackgroundTasks(): boolean {
+    return this.hasBackgroundWork || Boolean(this.sessionBinding?.session.blocksIdleRelease?.());
+  }
+
   isEventContextCurrent(context: ChatExecutionEventContext): boolean {
     const binding = this.sessionBinding;
     return Boolean(
@@ -697,6 +702,7 @@ export class ChatExecutionCoordinator {
       && this.pendingInteractions.size === 0
       && this.pendingSteerAttempts.size === 0
       && binding.backgroundSequences.size === 0
+      && !binding.session.blocksIdleRelease?.()
       && binding.pendingWorkCount === 0
       && (this.deps.warmExecution?.canCool() ?? true),
     );

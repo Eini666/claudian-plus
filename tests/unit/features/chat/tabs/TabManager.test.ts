@@ -25,6 +25,7 @@ const mockCreateTabRuntime = jest.fn(async (options: Record<string, any>) => {
   return tab;
 });
 const mockChooseForkTarget = jest.fn();
+const mockChooseBackgroundWorkSwitch = jest.fn();
 
 function createMockTab(options: Record<string, any>): any {
   let intentAdmissionPauseDepth = 0;
@@ -51,6 +52,7 @@ function createMockTab(options: Record<string, any>): any {
     executionCoordinator: {
       copyInputsForFork: jest.fn().mockResolvedValue(undefined),
       hasBackgroundWork: false,
+      hasLiveBackgroundTasks: false,
       notifyMayCool: jest.fn(),
       prepare: jest.fn().mockResolvedValue(undefined),
       state: 'absent',
@@ -123,6 +125,10 @@ jest.mock('@/features/chat/tabs/TabProviderState', () => ({
 
 jest.mock('@/features/chat/tabs/TabRuntimeFactory', () => ({
   createTabRuntime: (options: Record<string, any>) => mockCreateTabRuntime(options),
+}));
+
+jest.mock('@/shared/modals/BackgroundWorkSwitchModal', () => ({
+  chooseBackgroundWorkSwitch: (...args: unknown[]) => mockChooseBackgroundWorkSwitch(...args),
 }));
 
 jest.mock('@/shared/modals/ForkTargetModal', () => ({
@@ -2619,5 +2625,60 @@ describe('TabManager provider execution orchestration', () => {
     })).rejects.toThrow('fork state failed');
 
     expect(plugin.deleteConversation).toHaveBeenCalledWith('forked');
+  });
+});
+
+describe('TabManager background tasks on conversation switch', () => {
+  const setup = async () => {
+    const getCachedConversation = jest.fn((id: string) => ({ id, providerId: 'claude' }));
+    const { manager } = createManager(createPlugin({ getCachedConversation }));
+    const busy = (await manager.createTab('conversation-1'))!;
+    (busy.executionCoordinator as any).hasLiveBackgroundTasks = true;
+    const switchTo = busy.controllers.conversationController!.switchTo as jest.Mock;
+    switchTo.mockClear();
+    mockChooseBackgroundWorkSwitch.mockReset();
+    return { manager, busy, switchTo };
+  };
+
+  it('opens the conversation in a new tab and leaves background tasks running', async () => {
+    const { manager, busy, switchTo } = await setup();
+    mockChooseBackgroundWorkSwitch.mockResolvedValueOnce('new-tab');
+    await manager.openConversation('conversation-2');
+    expect(mockChooseBackgroundWorkSwitch).toHaveBeenCalledTimes(1);
+    expect(switchTo).not.toHaveBeenCalled();
+    expect(busy.conversationId).toBe('conversation-1');
+    expect(manager.getAllTabs().some(tab => tab !== busy && tab.conversationId === 'conversation-2')).toBe(true);
+  });
+
+  it('switches in place when the user accepts stopping background tasks', async () => {
+    const { manager, switchTo } = await setup();
+    mockChooseBackgroundWorkSwitch.mockResolvedValueOnce('switch');
+    await manager.openConversation('conversation-2');
+    expect(switchTo).toHaveBeenCalledWith('conversation-2');
+  });
+
+  it('does nothing when the user cancels', async () => {
+    const { manager, busy, switchTo } = await setup();
+    mockChooseBackgroundWorkSwitch.mockResolvedValueOnce(null);
+    await manager.openConversation('conversation-2');
+    expect(switchTo).not.toHaveBeenCalled();
+    expect(manager.getAllTabs()).toEqual([busy]);
+  });
+
+  it('asks when an async subagent is running', async () => {
+    const { manager, busy } = await setup();
+    (busy.executionCoordinator as any).hasLiveBackgroundTasks = false;
+    (busy.services.subagentManager.hasActiveAsyncSubagents as jest.Mock).mockReturnValue(true);
+    mockChooseBackgroundWorkSwitch.mockResolvedValueOnce(null);
+    await manager.openConversation('conversation-2');
+    expect(mockChooseBackgroundWorkSwitch).toHaveBeenCalledTimes(1);
+  });
+
+  it('switches without asking when nothing runs in the background', async () => {
+    const { manager, busy, switchTo } = await setup();
+    (busy.executionCoordinator as any).hasLiveBackgroundTasks = false;
+    await manager.openConversation('conversation-2');
+    expect(mockChooseBackgroundWorkSwitch).not.toHaveBeenCalled();
+    expect(switchTo).toHaveBeenCalledWith('conversation-2');
   });
 });

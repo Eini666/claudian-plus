@@ -127,6 +127,8 @@ ClaudeExecutionStrategySink {
   private queryToken = 0;
   private latestCommandQueryToken = -1;
   private disposed = false;
+  /** Zywe zadania w tle procesu CLI (`background_tasks_changed`, REPLACE semantics). */
+  private liveBackgroundTaskIds = new Set<string>();
   private readonly suppressedPersistentQueryTokens = new Set<number>();
   private readonly suppressedEphemeralQueryTokens = new Set<number>();
   private readonly pendingProviderStateDeletes = new Set<string>();
@@ -356,6 +358,10 @@ ClaudeExecutionStrategySink {
     return this.status;
   }
 
+  blocksIdleRelease(): boolean {
+    return this.liveBackgroundTaskIds.size > 0;
+  }
+
   onEvent(listener: (event: ProviderSessionEvent) => void): () => void {
     if (this.disposed) {
       return () => undefined;
@@ -381,6 +387,7 @@ ClaudeExecutionStrategySink {
     });
     this.sessionListeners.clear();
     this.backgroundTurn = null;
+    this.liveBackgroundTaskIds.clear();
     this.suppressedPersistentQueryTokens.clear();
     this.suppressedEphemeralQueryTokens.clear();
   }
@@ -524,6 +531,11 @@ ClaudeExecutionStrategySink {
       if (message.type === 'result') {
         this.suppressedPersistentQueryTokens.delete(queryToken);
       }
+      return;
+    }
+
+    if (message.type === 'system' && message.subtype === 'background_tasks_changed') {
+      this.liveBackgroundTaskIds = new Set(message.tasks.map(task => task.task_id));
       return;
     }
 
@@ -812,12 +824,15 @@ ClaudeExecutionStrategySink {
     if (this.nativeQuery === query) return;
     this.nativeQuery = query;
     this.authoritativeContextWindow = null;
+    // Nowy proces CLI startuje bez zadan w tle, a SDK nie emituje pustej listy na starcie.
+    this.liveBackgroundTaskIds.clear();
   }
 
   handleNativeQueryClosed(query: Query): void {
     if (this.nativeQuery !== query) return;
     this.nativeQuery = null;
     this.authoritativeContextWindow = null;
+    this.liveBackgroundTaskIds.clear();
   }
 
   handleAuthoritativeContextWindow(

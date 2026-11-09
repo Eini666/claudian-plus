@@ -102,6 +102,7 @@ class FakeSession implements ProviderExecutionSession,
   status: ProviderSessionStatus = 'idle';
   snapshot: ProviderSessionSnapshot;
   steerResult = true;
+  hasLiveBackgroundTask = false;
   readonly modes: string[] = [];
   rewindResult = {
     canRewind: true,
@@ -149,6 +150,10 @@ class FakeSession implements ProviderExecutionSession,
 
   cancel(): void {
     this.cancelCalls += 1;
+  }
+
+  blocksIdleRelease(): boolean {
+    return this.hasLiveBackgroundTask;
   }
 
   getSnapshot(): ProviderSessionSnapshot {
@@ -629,6 +634,48 @@ describe('ChatExecutionCoordinator', () => {
     await second.coordinator.dispose();
     await first.registry.dispose();
     await second.registry.dispose();
+  });
+
+  it('does not cool an idle coordinator whose session runs a background task', async () => {
+    const pool = new WarmExecutionPool(() => 5);
+    await reserveProtectedWarmSlots(pool);
+    const first = createHarness({
+      warmExecution: { ownerId: 'first-tab', pool, canCool: () => true },
+    });
+    const second = createHarness({
+      warmExecution: { ownerId: 'second-tab', pool, canCool: () => true },
+    });
+    await first.coordinator.bindConversation({
+      conversationId: 'conversation-1',
+      providerId: 'claude',
+    });
+    await first.coordinator.prepare();
+    const firstSession = first.backends.get('claude')!.sessions[0];
+    expect(first.coordinator.canCool()).toBe(true);
+
+    firstSession.hasLiveBackgroundTask = true;
+    expect(first.coordinator.canCool()).toBe(false);
+
+    await second.coordinator.bindConversation({
+      conversationId: 'conversation-2',
+      providerId: 'claude',
+    });
+    await expect(second.coordinator.prepare()).rejects.toEqual(
+      new WarmExecutionCapacityError(5),
+    );
+    expect(firstSession.disposeCalls).toBe(0);
+    expect(first.coordinator.state).toBe('idle');
+
+    firstSession.hasLiveBackgroundTask = false;
+    await second.coordinator.prepare();
+    expect(firstSession.disposeCalls).toBe(1);
+
+    await Promise.all([
+      first.coordinator.dispose(),
+      second.coordinator.dispose(),
+      first.registry.dispose(),
+      second.registry.dispose(),
+    ]);
   });
 
   it('protects a provider mode operation until its RPC settles', async () => {

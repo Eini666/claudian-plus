@@ -39,6 +39,8 @@ export interface ProviderExecutionSession {
   cancel(): void;
   getSnapshot(): ProviderSessionSnapshot;
   getStatus(): ProviderSessionStatus;
+  /** True, gdy natywny proces wykonuje prace w tle, ktora zginie przy zwolnieniu sesji. */
+  blocksIdleRelease?(): boolean;
   onEvent(listener: (event: ProviderSessionEvent) => void): () => void;
   dispose(): Promise<void>;
 }

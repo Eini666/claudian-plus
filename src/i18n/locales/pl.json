@@ -120,6 +120,12 @@
       "hiNameHowAreYou": "Cześć {name}, co u Ciebie?",
       "nameReturns": "{name} wraca!",
       "absolutelyRight": "Masz absolutną rację!"
+    },
+    "backgroundSwitch": {
+      "title": "Zadania w tle wciąż pracują",
+      "message": "W tej rozmowie działają zadania w tle (agenci albo polecenia). Przełączenie rozmowy w tej karcie je zatrzyma.",
+      "openNewTab": "Otwórz w nowej karcie",
+      "switchAnyway": "Przełącz mimo to"
     }
   },
   "settings": {
