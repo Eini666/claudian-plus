@@ -30,13 +30,13 @@ import type {
   ImagePickerButton,
   ModelSelector,
   ModeSelector,
-  PermissionToggle,
   PlanLimitsMeter,
   ServiceTierToggle,
   ThinkingBudgetSelector,
 } from '../ui/InputToolbar';
 import type { InstructionModeManager } from '../ui/InstructionModeManager';
 import type { NavigationSidebar } from '../ui/NavigationSidebar';
+import type { PermissionModeControl } from '../ui/PermissionModeMenu';
 import type { StatusPanel } from '../ui/StatusPanel';
 import type { TabSession } from './TabSession';
 
@@ -131,7 +131,7 @@ export interface TabUIComponents {
   readonly modeSelector: ModeSelector;
   readonly thinkingBudgetSelector: ThinkingBudgetSelector;
   readonly externalContextSelector: ExternalContextSelector;
-  readonly permissionToggle: PermissionToggle;
+  readonly permissionToggle: PermissionModeControl;
   readonly serviceTierToggle: ServiceTierToggle;
   readonly composerDropdown: MainChatComposerDropdown;
   readonly instructionModeManager: InstructionModeManager;

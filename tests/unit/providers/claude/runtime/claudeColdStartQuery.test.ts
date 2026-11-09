@@ -161,28 +161,27 @@ describe('runColdStartQuery', () => {
       expect(opts?.hooks).toBe(hooks);
     });
 
-    it('passes auto mode opt-in when Claude safe mode is auto', async () => {
-      sdkMock.setMockMessages([]);
+    it.each(['auto', 'default', 'acceptEdits', undefined])(
+      'passes auto mode opt-in regardless of Claude safe mode (%s)',
+      async (safeMode) => {
+        sdkMock.setMockMessages([]);
 
-      await runColdStartQuery(
-        createConfig({
-          providerSettings: {
-            model: 'claude-sonnet-4-5',
-            thinkingBudget: 'off',
-            effortLevel: 'medium',
-            loadUserClaudeSettings: false,
-            providerConfigs: {
-              claude: {
-                safeMode: 'auto',
-              },
+        await runColdStartQuery(
+          createConfig({
+            providerSettings: {
+              model: 'claude-sonnet-4-5',
+              thinkingBudget: 'off',
+              effortLevel: 'medium',
+              loadUserClaudeSettings: false,
+              ...(safeMode ? { providerConfigs: { claude: { safeMode } } } : {}),
             },
-          },
-        }),
-        'hi',
-      );
+          }),
+          'hi',
+        );
 
-      expect(sdkMock.getLastOptions()?.extraArgs).toEqual({ 'enable-auto-mode': null });
-    });
+        expect(sdkMock.getLastOptions()?.extraArgs).toEqual({ 'enable-auto-mode': null });
+      },
+    );
 
     it('sets persistSession false when configured', async () => {
       sdkMock.setMockMessages([]);

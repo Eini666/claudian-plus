@@ -80,25 +80,24 @@ describe('probeRuntimeCommands', () => {
 
     const options = sdkMock.getLastOptions();
     expect(options?.settingSources).toEqual(['user', 'project', 'local']);
-    expect(options?.extraArgs).toEqual({ chrome: null });
+    expect(options?.extraArgs).toEqual({ 'enable-auto-mode': null, chrome: null });
   });
 
-  it('passes auto mode opt-in when Claude safe mode is auto', async () => {
-    sdkMock.setMockMessages([
-      { type: 'system', subtype: 'init', session_id: 'probe-session' },
-    ], { appendResult: false });
-    sdkMock.setMockSupportedCommands([]);
+  it.each(['auto', 'default', 'acceptEdits', undefined])(
+    'passes auto mode opt-in regardless of Claude safe mode (%s)',
+    async (safeMode) => {
+      sdkMock.setMockMessages([
+        { type: 'system', subtype: 'init', session_id: 'probe-session' },
+      ], { appendResult: false });
+      sdkMock.setMockSupportedCommands([]);
 
-    await probeRuntimeCommands(createMockPlugin({
-      providerConfigs: {
-        claude: {
-          safeMode: 'auto',
-        },
-      },
-    }));
+      await probeRuntimeCommands(createMockPlugin(
+        safeMode ? { providerConfigs: { claude: { safeMode } } } : {},
+      ));
 
-    expect(sdkMock.getLastOptions()?.extraArgs).toEqual({ 'enable-auto-mode': null });
-  });
+      expect(sdkMock.getLastOptions()?.extraArgs).toEqual({ 'enable-auto-mode': null });
+    },
+  );
 
   it('aborts an in-flight SDK probe when its caller is cancelled', async () => {
     sdkMock.setMockMessages([

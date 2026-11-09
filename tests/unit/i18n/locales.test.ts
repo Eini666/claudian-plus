@@ -78,8 +78,6 @@ const localizedKeys = [
   'settings.enableBangBash.validation.noNode',
   'settings.requireCommandOrControlEnterToSend.name',
   'settings.requireCommandOrControlEnterToSend.desc',
-  'settings.claudeSafeMode.name',
-  'settings.claudeSafeMode.desc',
   'settings.codexSafeMode.name',
   'settings.codexSafeMode.desc',
   'settings.customModels.name',

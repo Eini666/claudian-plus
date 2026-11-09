@@ -1,10 +1,12 @@
 import { DEFAULT_REASONING_VALUE } from '../../../core/providers/reasoning';
 import type {
   ProviderChatUIConfig,
-  ProviderPermissionModeToggleConfig,
+  ProviderPermissionModeOption,
+  ProviderPermissionModePolicy,
   ProviderReasoningOption,
   ProviderUIOption,
 } from '../../../core/providers/types';
+import { t } from '../../../i18n/i18n';
 import { CLAUDE_PROVIDER_ICON } from '../../../shared/icons';
 import { getCustomModelIds } from '../env/claudeModelEnv';
 import {
@@ -14,6 +16,7 @@ import {
 } from '../modelOptions';
 import { toClaudeRuntimeModelId } from '../modelSelection';
 import { isClaudeModelTier } from '../modelTiers';
+import { CLAUDE_PERMISSION_MODES, migrateLegacyClaudeMode } from '../permissionModes';
 import { getClaudeProviderSettings, updateClaudeProviderSettings } from '../settings';
 import {
   DEFAULT_CLAUDE_MODELS,
@@ -25,14 +28,30 @@ import {
   supportsXHighEffort,
 } from '../types/models';
 
-const CLAUDE_PERMISSION_MODE_TOGGLE: ProviderPermissionModeToggleConfig = {
-  inactiveValue: 'normal',
-  inactiveLabel: 'Safe',
-  activeValue: 'yolo',
-  activeLabel: 'YOLO',
-  planValue: 'plan',
-  planLabel: 'PLAN',
-};
+const CLAUDE_PERMISSION_MODE_POLICY: ProviderPermissionModePolicy = Object.freeze({
+  values: CLAUDE_PERMISSION_MODES,
+  fallbackValue: 'manual',
+  migrateValue: migrateLegacyClaudeMode,
+});
+
+function getClaudePermissionModeOptions(): ProviderPermissionModeOption[] {
+  return [
+    { value: 'auto', label: t('chat.permissionMode.claude.auto'), description: t('chat.permissionMode.claude.autoDesc') },
+    { value: 'manual', label: t('chat.permissionMode.claude.manual'), description: t('chat.permissionMode.claude.manualDesc') },
+    {
+      value: 'acceptEdits',
+      label: t('chat.permissionMode.claude.acceptEdits'),
+      description: t('chat.permissionMode.claude.acceptEditsDesc'),
+    },
+    {
+      value: 'yolo',
+      label: t('chat.permissionMode.claude.yolo'),
+      description: t('chat.permissionMode.claude.yoloDesc'),
+      bypassesApprovals: true,
+    },
+    { value: 'plan', label: t('chat.permissionMode.claude.plan'), description: t('chat.permissionMode.claude.planDesc') },
+  ];
+}
 
 export const claudeChatUIConfig: ProviderChatUIConfig = {
   getModelOptions(settings) {
@@ -145,8 +164,10 @@ export const claudeChatUIConfig: ProviderChatUIConfig = {
     return getCustomModelIds(envVars);
   },
 
-  getPermissionModeToggle() {
-    return CLAUDE_PERMISSION_MODE_TOGGLE;
+  permissionModes: CLAUDE_PERMISSION_MODE_POLICY,
+
+  getPermissionModeOptions() {
+    return getClaudePermissionModeOptions();
   },
 
   isBangBashEnabled(settings) {

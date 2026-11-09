@@ -121,6 +121,8 @@ export async function runColdStartQuery(
     allowDangerouslySkipPermissions: true,
     settingSources: resolveClaudeSettingSources(claudeSettings.loadUserSettings),
     spawnClaudeCodeProcess: createCustomSpawnFunction(enhancedPath),
+    // Auto bez restartu procesu: flaga zawsze, tryb przelacza zywy setter.
+    extraArgs: { 'enable-auto-mode': null },
   };
 
   if (config.tools !== undefined) {
@@ -137,10 +139,6 @@ export async function runColdStartQuery(
 
   if (config.resumeSessionId) {
     options.resume = config.resumeSessionId;
-  }
-
-  if (claudeSettings.safeMode === 'auto') {
-    options.extraArgs = { ...options.extraArgs, 'enable-auto-mode': null };
   }
 
   if (!config.thinking?.disabled) {

@@ -126,6 +126,23 @@
       "message": "Background tasks (agents or commands) are running in this conversation. Switching the conversation in this tab will stop them.",
       "openNewTab": "Open in a new tab",
       "switchAnyway": "Switch anyway"
+    },
+    "permissionMode": {
+      "label": "権限モード",
+      "current": "権限モード：{mode}",
+      "changeFailed": "権限モードの変更に失敗しました",
+      "claude": {
+        "auto": "自動",
+        "autoDesc": "Claude が権限を判断",
+        "manual": "手動",
+        "manualDesc": "変更前に毎回確認",
+        "acceptEdits": "編集を許可",
+        "acceptEditsDesc": "すべてのファイル編集を自動許可",
+        "yolo": "YOLO",
+        "yoloDesc": "確認せずすべての権限を許可",
+        "plan": "Plan",
+        "planDesc": "Plans only, changes nothing (Shift+Tab returns)"
+      }
     }
   },
   "collab": {
@@ -720,10 +737,6 @@
     "loadUserSettings": {
       "name": "ユーザーClaude設定を読み込む",
       "desc": "~/.claude/settings.json を読み込みます。有効にすると、ユーザーの Claude Code 許可ルールがセキュリティモードをバイパスする可能性があります。"
-    },
-    "claudeSafeMode": {
-      "name": "セーフモード",
-      "desc": "Safe トグルが有効なときに使用する権限モードです。"
     },
     "codexSafeMode": {
       "name": "セーフモード",

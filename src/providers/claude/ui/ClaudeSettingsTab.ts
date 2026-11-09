@@ -18,8 +18,6 @@ import {
   resolveClaudeModelSelection,
 } from '../modelOptions';
 import {
-  CLAUDE_SAFE_MODES,
-  type ClaudeSafeMode,
   getClaudeProviderSettings,
   updateClaudeProviderSettings,
 } from '../settings';
@@ -205,25 +203,6 @@ export const claudeSettingsTabRenderer: ProviderSettingsTabRenderer = {
     // --- Safety ---
 
     new Setting(container).setName(t('settings.safety')).setHeading();
-
-    new Setting(container)
-      .setName(t('settings.claudeSafeMode.name'))
-      .setDesc(t('settings.claudeSafeMode.desc'))
-      .addDropdown((dropdown) => {
-        for (const mode of CLAUDE_SAFE_MODES) {
-          dropdown.addOption(mode, mode);
-        }
-        dropdown
-          .setValue(claudeSettings.safeMode)
-          .onChange(async (value) => {
-            await context.plugin.mutateSettings((settings) => {
-              updateClaudeProviderSettings(
-                settings,
-                { safeMode: value as ClaudeSafeMode },
-              );
-            });
-          });
-      });
 
     new Setting(container)
       .setName(t('settings.loadUserSettings.name'))

@@ -54,3 +54,109 @@
   transform: translateX(14px);
   background: var(--claudian-brand);
 }
+
+/* Permission mode menu (providers with a list of modes) */
+.claudian-permission-menu {
+  position: relative;
+  margin-left: auto;
+  padding-left: 12px;
+  padding-right: 8px;
+}
+
+.claudian-permission-menu-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.claudian-permission-menu-btn:hover .claudian-permission-label,
+.claudian-permission-menu-btn:focus-visible .claudian-permission-label {
+  color: var(--text-normal);
+}
+
+.claudian-permission-menu-icon {
+  display: flex;
+  align-items: center;
+}
+
+.claudian-permission-menu-icon svg {
+  width: 12px;
+  height: 12px;
+}
+
+.claudian-permission-menu-btn--alert,
+.claudian-permission-menu-btn--alert .claudian-permission-label,
+.claudian-permission-menu-btn--alert:hover .claudian-permission-label {
+  color: var(--text-warning);
+  font-weight: 600;
+}
+
+.claudian-permission-menu-dropdown {
+  position: absolute;
+  bottom: 100%;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 4px;
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  width: max-content;
+  max-width: 280px;
+  padding: 4px;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.15s ease, visibility 0.15s ease;
+}
+
+.claudian-permission-menu:hover .claudian-permission-menu-dropdown,
+.claudian-permission-menu:focus-within .claudian-permission-menu-dropdown {
+  opacity: 1;
+  visibility: visible;
+}
+
+.claudian-permission-menu-option {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 4px 8px;
+  cursor: pointer;
+  border-radius: 3px;
+  color: var(--text-muted);
+  transition: background 0.1s ease, color 0.1s ease;
+}
+
+.claudian-permission-menu-option:hover {
+  background: var(--background-modifier-hover);
+  color: var(--text-normal);
+}
+
+.claudian-permission-menu-option.selected {
+  background: rgba(var(--claudian-brand-rgb), 0.15);
+  color: var(--claudian-brand);
+}
+
+.claudian-permission-menu-option--alert .claudian-permission-menu-option-label {
+  color: var(--text-warning);
+}
+
+.claudian-permission-menu-option-label {
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.claudian-permission-menu-option-desc {
+  font-size: 10px;
+  color: var(--text-faint);
+  white-space: normal;
+}
+
+/* Poza domem stoi za kontrolka trybu: dwa margin-left:auto dzielily wolne miejsce i spychaly tryb na srodek. */
+:is(.claudian-permission-toggle, .claudian-permission-menu):not(.claudian-hidden) ~ .claudian-away-toggle {
+  margin-left: 0;
+}

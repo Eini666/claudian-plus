@@ -1,3 +1,5 @@
+import { Notice } from 'obsidian';
+
 import { getHiddenProviderCommandSet } from '../../../core/providers/commands/hiddenCommands';
 import { normalizeProviderCommandDiscoveryItems } from '../../../core/providers/commands/ProviderCommandDiscoveryResult';
 import { ProviderCommandDiscoveryStore } from '../../../core/providers/commands/ProviderCommandDiscoveryStore';
@@ -18,6 +20,7 @@ import type {
   ProviderUIOption,
 } from '../../../core/providers/types';
 import type { ClaudianSettings, Conversation } from '../../../core/types';
+import { t } from '../../../i18n/i18n';
 import { forCurrentAccount } from '../../../utils/claudeAccount';
 import type { FeatureHost } from '../../FeatureHost';
 import { toggleServiceTier } from '../actions/toggleServiceTier';
@@ -127,7 +130,15 @@ export function getTabPermissionMode(
   const permissionMode = getTabSettingsSnapshot(tab, plugin).permissionMode;
   return typeof permissionMode === 'string' && permissionMode
     ? permissionMode
-    : 'normal';
+    : getFallbackPermissionMode(tab, plugin);
+}
+
+/**
+ * Tryb, gdy nie ma czego przywrócić. Zapis (`commitProviderSettingsSnapshot`) nie migruje wartości,
+ * więc provider z polityką trybów dostaje jej `fallbackValue`, a nie wycofane `normal`.
+ */
+function getFallbackPermissionMode(tab: TabProviderContext, plugin: FeatureHost): string {
+  return getTabChatUIConfig(tab, plugin).permissionModes?.fallbackValue ?? 'normal';
 }
 
 export function getTabHiddenCommands(
@@ -254,7 +265,9 @@ export function applyProviderUIGating(
 ): void {
   const capabilities = getTabCapabilities(tab, plugin);
   const uiConfig = getTabChatUIConfig(tab, plugin);
-  const hasPermissionToggle = Boolean(uiConfig.getPermissionModeToggle?.());
+  const hasPermissionToggle = Boolean(
+    uiConfig.getPermissionModeToggle?.() || uiConfig.getPermissionModeOptions?.(),
+  );
 
   tab.ui.permissionToggle.setVisible(hasPermissionToggle);
 
@@ -467,7 +480,7 @@ export async function restorePrePlanMode(
   plugin: FeatureHost,
 ): Promise<void> {
   if (getTabPermissionMode(tab, plugin) !== 'plan') return;
-  const restoreMode = tab.state.prePlanPermissionMode ?? 'normal';
+  const restoreMode = tab.state.prePlanPermissionMode ?? getFallbackPermissionMode(tab, plugin);
   try {
     await updatePlanModeUI(tab, plugin, restoreMode);
   } finally {
@@ -475,6 +488,41 @@ export async function restorePrePlanMode(
       tab.state.prePlanPermissionMode = null;
     }
   }
+}
+
+/**
+ * Zmiana trybu z menu i Shift+Tab: od razu na żywej sesji (`syncExecution`), z cofnięciem przy błędzie.
+ * Wejście w plan zapamiętuje tryb sprzed planu, wyjście z planu go czyści.
+ */
+export async function changePermissionMode(
+  tab: AssembledTabRuntime,
+  plugin: FeatureHost,
+  mode: string,
+): Promise<void> {
+  const current = getTabPermissionMode(tab, plugin);
+  if (mode === current) return;
+  if (mode === 'plan') tab.state.prePlanPermissionMode = current;
+  try {
+    await updatePlanModeUI(tab, plugin, mode, { syncExecution: true });
+  } catch (error) {
+    const reason = error instanceof Error && error.message ? `: ${error.message}` : '';
+    new Notice(`${t('chat.permissionMode.changeFailed')}${reason}`);
+  } finally {
+    if (getTabPermissionMode(tab, plugin) !== 'plan') {
+      tab.state.prePlanPermissionMode = null;
+    }
+  }
+}
+
+/** Shift+Tab: plan albo powrót do trybu sprzed planu. */
+export async function togglePlanMode(
+  tab: AssembledTabRuntime,
+  plugin: FeatureHost,
+): Promise<void> {
+  const target = getTabPermissionMode(tab, plugin) === 'plan'
+    ? tab.state.prePlanPermissionMode ?? getFallbackPermissionMode(tab, plugin)
+    : 'plan';
+  await changePermissionMode(tab, plugin, target);
 }
 
 export async function updatePlanModeUI(

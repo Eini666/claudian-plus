@@ -237,6 +237,23 @@ export interface ProviderReasoningOption extends ProviderUIOption {
   tokens?: number;
 }
 
+/** Permission-mode values a provider accepts in the shared `permissionMode` setting. */
+export interface ProviderPermissionModePolicy {
+  readonly values: readonly string[];
+  /** Fail-closed value for unknown stored values. */
+  readonly fallbackValue: string;
+  /** Initial choice when no permission has been selected for this provider. */
+  readonly defaultValue?: string;
+  /** Maps a retired stored value to a current one; unmapped values use the fallback. */
+  migrateValue?(value: string, settings: Record<string, unknown>): string | undefined;
+}
+
+/** One toolbar permission-mode choice, in menu order. */
+export interface ProviderPermissionModeOption extends ProviderUIOption {
+  /** Skips approval prompts; the toolbar marks it as a warning while selected. */
+  bypassesApprovals?: boolean;
+}
+
 /** Compact permission-mode toggle descriptor for providers that expose the current toolbar control. */
 export interface ProviderPermissionModeToggleConfig {
   inactiveValue: string;
@@ -328,6 +345,12 @@ export interface ProviderChatUIConfig {
 
   /** Optional permission-mode toggle descriptor. Return null when the provider exposes no permission toggle UI. */
   getPermissionModeToggle?(): ProviderPermissionModeToggleConfig | null;
+
+  /** Optional permission-mode menu choices; replaces the toggle for providers that define it. */
+  getPermissionModeOptions?(settings?: Record<string, unknown>): readonly ProviderPermissionModeOption[] | null;
+
+  /** Values accepted in `permissionMode` (plus `plan` when supported) and migration of retired ones. */
+  readonly permissionModes?: ProviderPermissionModePolicy;
 
   /** Optional provider-owned mapping back into the shared permission-mode contract. */
   resolvePermissionMode?(settings: Record<string, unknown>): string | null;

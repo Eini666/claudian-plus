@@ -126,6 +126,23 @@
       "message": "W tej rozmowie działają zadania w tle (agenci albo polecenia). Przełączenie rozmowy w tej karcie je zatrzyma.",
       "openNewTab": "Otwórz w nowej karcie",
       "switchAnyway": "Przełącz mimo to"
+    },
+    "permissionMode": {
+      "label": "Tryb uprawnień",
+      "current": "Tryb uprawnień: {mode}",
+      "changeFailed": "Nie udało się zmienić trybu uprawnień",
+      "claude": {
+        "auto": "Auto",
+        "autoDesc": "Claude sam decyduje o uprawnieniach",
+        "manual": "Ręczny",
+        "manualDesc": "Zawsze pyta przed zmianami",
+        "acceptEdits": "Akceptuj edycje",
+        "acceptEditsDesc": "Edycje plików bez pytania",
+        "yolo": "YOLO",
+        "yoloDesc": "Wszystko bez pytania",
+        "plan": "Plan",
+        "planDesc": "Tylko planuje, niczego nie zmienia (Shift+Tab wraca)"
+      }
     }
   },
   "settings": {
@@ -379,10 +396,6 @@
     "loadUserSettings": {
       "name": "Wczytuj ustawienia użytkownika",
       "desc": "Wczytuj ~/.claude/settings.json. Po włączeniu reguły uprawnień z Claude Code mogą omijać tryb bezpieczny."
-    },
-    "claudeSafeMode": {
-      "name": "Tryb bezpieczny",
-      "desc": "Tryb uprawnień używany, gdy przełącznik Bezpieczny jest włączony."
     },
     "codexSafeMode": {
       "name": "Tryb bezpieczny",

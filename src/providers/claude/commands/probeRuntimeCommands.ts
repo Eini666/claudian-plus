@@ -84,7 +84,7 @@ export async function probeRuntimeCommands(
       plugin.settings,
     );
     const extraArgs = {
-      ...(claudeSettings.safeMode === 'auto' ? { 'enable-auto-mode': null } : {}),
+      'enable-auto-mode': null,
       ...(claudeSettings.enableChrome ? { chrome: null } : {}),
     };
     const agentQuery = await awaitWithAbort(loadClaudeAgentQuery(), signal);
@@ -98,7 +98,7 @@ export async function probeRuntimeCommands(
         permissionMode: 'bypassPermissions',
         allowDangerouslySkipPermissions: true,
         settingSources: resolveClaudeSettingSources(claudeSettings.loadUserSettings),
-        ...(Object.keys(extraArgs).length > 0 ? { extraArgs } : {}),
+        extraArgs,
         spawnClaudeCodeProcess: createCustomSpawnFunction(enhancedPath),
         persistSession: false,
       },

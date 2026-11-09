@@ -6,12 +6,17 @@ import type {
 } from '../../../core/execution';
 import { TOOL_AGENT_OUTPUT } from '../../../core/tools/toolNames';
 import type { ChatMessage, StreamChunk } from '../../../core/types';
+import {
+  fromClaudeSDKPermissionMode,
+  isClaudePermissionMode,
+} from '../../../providers/claude/permissionModes';
 import type { FeatureHost } from '../../FeatureHost';
 import {
   providerOutputEventToStreamChunk,
 } from '../controllers/StreamController';
 import type { ChatExecutionEventContext } from '../execution/ChatExecutionCoordinator';
 import { markLimitReached } from '../services/limitWait';
+import { getTabProviderId } from './providerResolution';
 import { updatePlanModeUI } from './TabProviderState';
 import type { AssembledTabRuntime } from './types';
 
@@ -27,7 +32,12 @@ const backgroundTurnBuffers = new WeakMap<
   Map<string, Map<string, ProviderBackgroundOutputEvent[]>>
 >();
 
-function normalizeProviderMode(mode: string): string {
+/** null = mode outside the toolbar (Claude dontAsk, delegate, retired normal): UI stays as is. */
+function normalizeProviderMode(providerId: string, mode: string): string | null {
+  if (providerId === 'claude') {
+    // setMode echoes toolbar values, session_init reports native SDK modes.
+    return isClaudePermissionMode(mode) ? mode : fromClaudeSDKPermissionMode(mode);
+  }
   if (mode === 'bypassPermissions' || mode === 'yolo') return 'yolo';
   if (mode === 'plan') return 'plan';
   return 'normal';
@@ -42,8 +52,8 @@ async function handleTabSessionEvent(
 ): Promise<void> {
   if (!isCurrent()) return;
   if (event.type === 'mode_changed') {
-    await updatePlanModeUI(tab, plugin, normalizeProviderMode(event.mode));
-    if (!isCurrent()) return;
+    const mode = normalizeProviderMode(getTabProviderId(tab, plugin), event.mode);
+    if (mode) await updatePlanModeUI(tab, plugin, mode);
     return;
   }
   if (event.type === 'prompt_suggestion') {

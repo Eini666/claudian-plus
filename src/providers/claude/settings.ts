@@ -17,6 +17,7 @@ export type ClaudeSettingSource = 'user' | 'project' | 'local';
 
 export interface ClaudeProviderSettings {
   enabled: boolean;
+  /** Retired: read only by the permission-mode migration of the stored `normal` value. */
   safeMode: ClaudeSafeMode;
   cliPath: string;
   cliPathsByHost: HostnameCliPaths;

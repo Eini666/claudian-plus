@@ -15,7 +15,6 @@ import {
   resolveConversationModel,
 } from '../../core/providers/conversationModel';
 import { ProviderRegistry } from '../../core/providers/ProviderRegistry';
-import { ProviderSettingsCoordinator } from '../../core/providers/ProviderSettingsCoordinator';
 import { type AppTabManagerState, DEFAULT_CHAT_PROVIDER_ID, type ProviderId } from '../../core/providers/types';
 import { type ConversationMeta, VIEW_TYPE_CLAUDIAN } from '../../core/types';
 import { t } from '../../i18n/i18n';
@@ -43,7 +42,7 @@ import { TabBar } from './tabs/TabBar';
 import { sendTabInputMessageFromExplicitEnterShortcut } from './tabs/TabInputEvents';
 import { commitProvisionalTab } from './tabs/TabLifecycle';
 import { TabManager } from './tabs/TabManager';
-import { updatePlanModeUI } from './tabs/TabProviderState';
+import { togglePlanMode } from './tabs/TabProviderState';
 import type { AssembledTabRuntime, TabId } from './tabs/types';
 import {
   HorizontalPanelPager,
@@ -2593,38 +2592,7 @@ export class ClaudianView extends ItemView {
         const providerId = getTabProviderId(activeTab, this.plugin);
         if (!ProviderRegistry.getCapabilities(providerId).supportsPlanMode) return;
         commitProvisionalTab(activeTab);
-        const current = ProviderSettingsCoordinator.getProviderSettingsSnapshot(
-          this.plugin.settings,
-          providerId,
-        ).permissionMode as string;
-        if (current === 'plan') {
-          const restoreMode = activeTab.state.prePlanPermissionMode ?? 'normal';
-          void updatePlanModeUI(activeTab, this.plugin, restoreMode, { syncExecution: true })
-            .finally(() => {
-              const activeMode = ProviderSettingsCoordinator.getProviderSettingsSnapshot(
-                this.plugin.settings,
-                providerId,
-              ).permissionMode;
-              if (activeMode !== 'plan') {
-                activeTab.state.prePlanPermissionMode = null;
-              }
-            })
-            .catch((error: unknown) => {
-              new Notice(error instanceof Error ? error.message : 'Failed to change permission mode.');
-            });
-        } else {
-          activeTab.state.prePlanPermissionMode = current;
-          void updatePlanModeUI(activeTab, this.plugin, 'plan', { syncExecution: true }).catch((error: unknown) => {
-            const activeMode = ProviderSettingsCoordinator.getProviderSettingsSnapshot(
-              this.plugin.settings,
-              providerId,
-            ).permissionMode;
-            if (activeMode !== 'plan') {
-              activeTab.state.prePlanPermissionMode = null;
-            }
-            new Notice(error instanceof Error ? error.message : 'Failed to change permission mode.');
-          });
-        }
+        void togglePlanMode(activeTab, this.plugin);
       }
     });
 

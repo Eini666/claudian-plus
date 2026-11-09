@@ -1020,6 +1020,87 @@ describe('ClaudeExecutionBackend', () => {
     expect(query?.setMcpServers).not.toHaveBeenCalled();
   });
 
+  it.each([
+    ['auto', 'auto'],
+    ['manual', 'default'],
+    ['acceptEdits', 'acceptEdits'],
+    ['yolo', 'bypassPermissions'],
+    ['plan', 'plan'],
+  ])('maps toolbar permission mode %s to SDK %s', async (permissionMode, sdkMode) => {
+    sdkMock.setMockMessages([
+      { type: 'system', subtype: 'init', session_id: 'session-1' },
+      { type: 'result', subtype: 'success' },
+    ], { appendResult: false });
+    const { services } = createServices();
+    const session = new ClaudeExecutionBackend(createHost(), services)
+      .createSession(createConfig());
+
+    await collectEvents(session.execute(createRequest({
+      configuration: {
+        systemInstructions: { kind: 'provider-default' },
+        model: 'claude-sonnet-4-5',
+        reasoning: 'medium',
+        permissionMode,
+      },
+    })).events);
+
+    expect(sdkMock.getLastOptions()?.permissionMode).toBe(sdkMode);
+  });
+
+  it('resolves the retired normal mode through the legacy safeMode', async () => {
+    sdkMock.setMockMessages([
+      { type: 'system', subtype: 'init', session_id: 'session-1' },
+      { type: 'result', subtype: 'success' },
+    ], { appendResult: false });
+    const host = createHost();
+    (host.settings as Record<string, unknown>).providerConfigs = { claude: { safeMode: 'auto' } };
+    const { services } = createServices();
+    const session = new ClaudeExecutionBackend(host, services)
+      .createSession(createConfig());
+
+    await collectEvents(session.execute(createRequest({
+      configuration: {
+        systemInstructions: { kind: 'provider-default' },
+        model: 'claude-sonnet-4-5',
+        reasoning: 'medium',
+        permissionMode: 'normal',
+      },
+    })).events);
+
+    expect(sdkMock.getLastOptions()?.permissionMode).toBe('auto');
+  });
+
+  it('always opts into auto mode and switches manual to auto in the live process', async () => {
+    sdkMock.setMockMessages([
+      { type: 'system', subtype: 'init', session_id: 'session-1' },
+      { type: 'result', subtype: 'success' },
+    ], { appendResult: false });
+    const { services } = createServices();
+    const session = new ClaudeExecutionBackend(createHost(), services)
+      .createSession(createConfig());
+    const configuration = (permissionMode: string) => ({
+      systemInstructions: { kind: 'provider-default' as const },
+      model: 'claude-sonnet-4-5',
+      reasoning: 'medium',
+      permissionMode,
+    });
+
+    await collectEvents(session.execute(createRequest({
+      configuration: configuration('manual'),
+    })).events);
+    expect(sdkMock.getLastOptions()?.extraArgs).toEqual(expect.objectContaining({
+      'enable-auto-mode': null,
+    }));
+    const query = sdkMock.getLastResponse();
+    await collectEvents(session.execute(createRequest({
+      configuration: configuration('auto'),
+    })).events);
+
+    // Ten sam restartKey: proces zostaje, tryb idzie zywym setterem.
+    expect(sdkMock.getQueryCallCount()).toBe(1);
+    expect(query?.setPermissionMode).toHaveBeenCalledWith('auto');
+  });
+
   it('replays canonical history only while bootstrapping a native session', async () => {
     sdkMock.setMockMessages([
       { type: 'system', subtype: 'init', session_id: 'session-1' },

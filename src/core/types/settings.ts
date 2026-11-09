@@ -112,8 +112,8 @@ export type InstructionRefineResult =
   | InstructionRefineOutcome
   | AuxiliaryContinuityReset;
 
-/** Permission mode for tool execution. */
-export type PermissionMode = 'yolo' | 'plan' | 'normal';
+/** Permission mode for tool execution. `normal` stays for toggle providers and as Claude's retired value. */
+export type PermissionMode = 'yolo' | 'plan' | 'normal' | 'auto' | 'manual' | 'acceptEdits';
 
 /** Scope for environment variable storage and snippets. */
 export type EnvironmentScope = 'shared' | `provider:${string}`;

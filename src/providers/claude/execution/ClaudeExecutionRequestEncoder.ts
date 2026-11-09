@@ -39,6 +39,11 @@ import {
   buildPromptWithHistoryContext,
 } from '../../../utils/session';
 import { toClaudeRuntimeModelId } from '../modelSelection';
+import {
+  CLAUDE_PERMISSION_MODES,
+  LEGACY_SAFE_MODES,
+  toClaudeSDKPermissionMode,
+} from '../permissionModes';
 import { createCustomSpawnFunction } from '../runtime/customSpawn';
 import {
   DISABLED_BUILTIN_SUBAGENTS,
@@ -60,10 +65,11 @@ const EFFORT_LEVELS = new Set<EffortLevel>([
   'xhigh',
   'max',
 ]);
+// `normal` is retired, kept for snapshots written before the migration.
 const PERMISSION_MODES = new Set<PermissionMode>([
-  'normal',
+  ...CLAUDE_PERMISSION_MODES,
   'plan',
-  'yolo',
+  'normal',
 ]);
 const EXPLICIT_PROTOCOL_INSTRUCTIONS = [
   'Honor the host tool policy and every permission decision.',
@@ -222,12 +228,11 @@ export class ClaudeExecutionRequestEncoder {
       ...options.extraArgs,
       'replay-user-messages': null,
     };
-    if (claudeSettings.safeMode === 'auto') {
-      options.extraArgs = {
-        ...options.extraArgs,
-        'enable-auto-mode': null,
-      };
-    }
+    // Auto bez restartu procesu: flaga zawsze, tryb przelacza zywy setter.
+    options.extraArgs = {
+      ...options.extraArgs,
+      'enable-auto-mode': null,
+    };
     if (claudeSettings.enableChrome) {
       options.extraArgs = {
         ...options.extraArgs,
@@ -262,7 +267,6 @@ export class ClaudeExecutionRequestEncoder {
         cliPath,
         settingSources: options.settingSources,
         enableChrome: claudeSettings.enableChrome,
-        enableAutoMode: claudeSettings.safeMode === 'auto',
         persistSession: options.persistSession,
         // przelaczenie konta = swiezy proces, patrz bumpAccountGeneration
         accountGeneration: getAccountGeneration(),
@@ -288,9 +292,10 @@ export class ClaudeExecutionRequestEncoder {
     permissionMode: PermissionMode,
     safeMode = getClaudeProviderSettings(this.deps.host.settings).safeMode,
   ): SDKPermissionMode {
-    if (permissionMode === 'yolo') return 'bypassPermissions';
-    if (permissionMode === 'plan') return 'plan';
-    return safeMode;
+    if (permissionMode === 'normal') {
+      return toClaudeSDKPermissionMode(LEGACY_SAFE_MODES[safeMode] ?? 'manual');
+    }
+    return toClaudeSDKPermissionMode(permissionMode);
   }
 
   private resolveSettings(request: ProviderExecutionRequest): ClaudianSettings {

@@ -27,6 +27,7 @@ import { createInputToolbar } from '../../ui/InputToolbar';
 import { InstructionModeManager as InstructionModeManagerClass } from '../../ui/InstructionModeManager';
 import { NavigationSidebar } from '../../ui/NavigationSidebar';
 import { attachPasteCollapse } from '../../ui/pasteCollapse';
+import { combinePermissionControls } from '../../ui/PermissionModeMenu';
 import { StatusPanel } from '../../ui/StatusPanel';
 import { installTextareaSizing } from '../../ui/textareaSizing';
 import { recalculateUsageForModel } from '../../utils/usageInfo';
@@ -35,10 +36,12 @@ import { commitProvisionalTab } from '../TabLifecycle';
 import { TabModelSelectionCoordinator } from '../TabModelSelectionCoordinator';
 import {
   applyProviderUIGating,
+  changePermissionMode,
   getBlankTabModelOptions,
   getTabCapabilities,
   getTabChatUIConfig,
   getTabHiddenCommands,
+  getTabPermissionMode,
   getTabSelectedModel,
   getTabSettingsSnapshot,
   refreshTabProviderUI,
@@ -464,18 +467,23 @@ function buildInputToolbar(
     },
     onPermissionModeChange: async (mode: string) => {
       const tab = runtimeRef.requirePublished();
-      await updateTabProviderSettings(tab, plugin, (settings) => {
-        const uiConfig = getTabChatUIConfig(tab, plugin);
-        if (uiConfig.applyPermissionMode) {
-          uiConfig.applyPermissionMode(mode, settings);
-        } else {
-          settings.permissionMode = mode;
-        }
-      });
+      const uiConfig = getTabChatUIConfig(tab, plugin);
+      if (uiConfig.getPermissionModeOptions) {
+        // Menu trybów: od razu na żywej sesji, tą samą ścieżką co Shift+Tab.
+        await changePermissionMode(tab, plugin, mode);
+      } else {
+        await updateTabProviderSettings(tab, plugin, (settings) => {
+          if (uiConfig.applyPermissionMode) {
+            uiConfig.applyPermissionMode(mode, settings);
+          } else {
+            settings.permissionMode = mode;
+          }
+        });
+      }
       tab.ui.permissionToggle.updateDisplay();
       shell.dom.inputWrapper.toggleClass(
         'claudian-input-plan-mode',
-        mode === 'plan' && getTabCapabilities(tab, plugin).supportsPlanMode,
+        getTabPermissionMode(tab, plugin) === 'plan' && getTabCapabilities(tab, plugin).supportsPlanMode,
       );
       onUserModified();
     },
@@ -583,7 +591,7 @@ export function buildTabRuntimeUI(
     modeSelector: toolbar.modeSelector,
     thinkingBudgetSelector: toolbar.thinkingBudgetSelector,
     externalContextSelector: toolbar.externalContextSelector,
-    permissionToggle: toolbar.permissionToggle,
+    permissionToggle: combinePermissionControls(toolbar.permissionToggle, toolbar.permissionModeMenu),
     serviceTierToggle: toolbar.serviceTierToggle,
     composerDropdown,
     ...instructionComponents,

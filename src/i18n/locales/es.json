@@ -126,6 +126,23 @@
       "message": "Background tasks (agents or commands) are running in this conversation. Switching the conversation in this tab will stop them.",
       "openNewTab": "Open in a new tab",
       "switchAnyway": "Switch anyway"
+    },
+    "permissionMode": {
+      "label": "Modo de permisos",
+      "current": "Modo de permisos: {mode}",
+      "changeFailed": "No se pudo cambiar el modo de permisos",
+      "claude": {
+        "auto": "Automático",
+        "autoDesc": "Claude decide los permisos",
+        "manual": "Manual",
+        "manualDesc": "Preguntar siempre antes de cambiar",
+        "acceptEdits": "Aceptar ediciones",
+        "acceptEditsDesc": "Aceptar automáticamente todas las ediciones de archivos",
+        "yolo": "YOLO",
+        "yoloDesc": "Aceptar todos los permisos sin preguntar",
+        "plan": "Plan",
+        "planDesc": "Plans only, changes nothing (Shift+Tab returns)"
+      }
     }
   },
   "collab": {
@@ -720,10 +737,6 @@
     "loadUserSettings": {
       "name": "Cargar configuración de usuario Claude",
       "desc": "Carga ~/.claude/settings.json. Cuando está habilitado, las reglas de permisos del usuario pueden eludir el modo seguro."
-    },
-    "claudeSafeMode": {
-      "name": "Modo seguro",
-      "desc": "Modo de permisos usado cuando el interruptor Seguro está activo."
     },
     "codexSafeMode": {
       "name": "Modo seguro",

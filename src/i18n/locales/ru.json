@@ -126,6 +126,23 @@
       "message": "Background tasks (agents or commands) are running in this conversation. Switching the conversation in this tab will stop them.",
       "openNewTab": "Open in a new tab",
       "switchAnyway": "Switch anyway"
+    },
+    "permissionMode": {
+      "label": "Режим разрешений",
+      "current": "Режим разрешений: {mode}",
+      "changeFailed": "Не удалось изменить режим разрешений",
+      "claude": {
+        "auto": "Автоматически",
+        "autoDesc": "Claude принимает решения о разрешениях",
+        "manual": "Вручную",
+        "manualDesc": "Всегда спрашивать перед изменениями",
+        "acceptEdits": "Разрешать изменения",
+        "acceptEditsDesc": "Автоматически разрешать все изменения файлов",
+        "yolo": "YOLO",
+        "yoloDesc": "Разрешать всё без запроса",
+        "plan": "Plan",
+        "planDesc": "Plans only, changes nothing (Shift+Tab returns)"
+      }
     }
   },
   "collab": {
@@ -720,10 +737,6 @@
     "loadUserSettings": {
       "name": "Загружать пользовательские настройки Claude",
       "desc": "Загружает ~/.claude/settings.json. При включении пользовательские правила разрешений Claude Code могут обходить безопасный режим."
-    },
-    "claudeSafeMode": {
-      "name": "Безопасный режим",
-      "desc": "Режим разрешений, используемый, когда переключатель Safe активен."
     },
     "codexSafeMode": {
       "name": "Безопасный режим",

@@ -47,6 +47,7 @@ import { flagaPozaDomem, folderMostu } from '../services/ariTelefon';
 import { getAriWidget } from '../services/AriWidget';
 import { subscribeTurn } from '../services/TurnNotifier';
 import { EnvironmentSelector } from './EnvironmentSelector';
+import { PermissionModeMenu } from './PermissionModeMenu';
 
 interface ElectronOpenDialogResult {
   canceled: boolean;
@@ -601,7 +602,7 @@ export class AwayToggle {
 
   constructor(parentEl: HTMLElement, bridgeDir: string, assistantName?: unknown) {
     this.flaga = flagaPozaDomem(bridgeDir);
-    const container = parentEl.createDiv({ cls: 'claudian-permission-toggle' });
+    const container = parentEl.createDiv({ cls: 'claudian-permission-toggle claudian-away-toggle' });
     container.setAttr(
       'title',
       `Poza domem: ${resolveAssistantName(assistantName)} wysyła głosówki na Telegram po każdym etapie`,
@@ -1665,6 +1666,7 @@ export function createInputToolbar(
   externalContextSelector: ExternalContextSelector;
   imagePickerButton: ImagePickerButton;
   permissionToggle: PermissionToggle;
+  permissionModeMenu: PermissionModeMenu;
   serviceTierToggle: ServiceTierToggle;
   ariAvatarBadge: AriAvatarBadge | null;
   awayToggle: AwayToggle | null;
@@ -1694,6 +1696,8 @@ export function createInputToolbar(
   const externalContextSelector = new ExternalContextSelector(parentEl, callbacks);
   const imagePickerButton = new ImagePickerButton(parentEl, callbacks);
   const permissionToggle = new PermissionToggle(parentEl, callbacks);
+  // Obie kontrolki trybu stoja w pasku; kazda chowa sie, gdy provider karty jej nie obsluguje.
+  const permissionModeMenu = new PermissionModeMenu(parentEl, callbacks);
   // Most wyłączony albo bez folderu = brak przełącznika.
   const bridgeDir = folderMostu(settings);
   const awayToggle = bridgeDir ? new AwayToggle(parentEl, bridgeDir, settings.assistantName) : null;
@@ -1716,6 +1720,7 @@ export function createInputToolbar(
     externalContextSelector,
     imagePickerButton,
     permissionToggle,
+    permissionModeMenu,
     awayToggle,
     environmentSelector,
   };

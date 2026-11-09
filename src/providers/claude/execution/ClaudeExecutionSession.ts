@@ -33,6 +33,7 @@ import {
   isSessionMissingError,
 } from '../../../utils/session';
 import type { ClaudeWorkspaceServices } from '../app/ClaudeWorkspaceServices';
+import { fromClaudeSDKPermissionMode, isClaudePermissionMode } from '../permissionModes';
 import { executeClaudeRewind } from '../runtime/ClaudeRewindService';
 import { buildClaudeSDKUserMessage } from '../runtime/ClaudeUserMessageFactory';
 import { getClaudeState } from '../types/providerState';
@@ -1548,26 +1549,17 @@ function normalizePermissionMode(value: unknown): PermissionMode {
 function normalizeRequestedPermissionMode(
   value: unknown,
 ): PermissionMode | null {
-  return value === 'normal' || value === 'plan' || value === 'yolo'
+  // `normal` is retired; the encoder resolves it through the legacy safeMode.
+  return isClaudePermissionMode(value) || value === 'plan' || value === 'normal'
     ? value
     : null;
 }
 
+/** null (dontAsk, delegate, unknown) leaves the current mode unchanged. */
 function normalizeSdkPermissionMode(
   value: unknown,
 ): PermissionMode | null {
-  if (value === 'plan') return 'plan';
-  if (value === 'bypassPermissions') return 'yolo';
-  if (
-    value === 'acceptEdits'
-    || value === 'auto'
-    || value === 'default'
-    || value === 'delegate'
-    || value === 'dontAsk'
-  ) {
-    return 'normal';
-  }
-  return null;
+  return fromClaudeSDKPermissionMode(value);
 }
 
 function mapSdkCommand(command: SDKSlashCommand): SlashCommand {

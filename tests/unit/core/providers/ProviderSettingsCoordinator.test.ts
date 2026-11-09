@@ -1045,4 +1045,86 @@ describe('ProviderSettingsCoordinator', () => {
       });
     });
   });
+
+  describe('Claude permission-mode policy', () => {
+    function claudeSettings(overrides: Record<string, unknown>): Record<string, unknown> {
+      return {
+        settingsProvider: 'claude',
+        model: 'haiku',
+        effortLevel: 'high',
+        serviceTier: 'default',
+        thinkingBudget: 'off',
+        ...overrides,
+      };
+    }
+
+    it.each([
+      ['auto', 'auto'],
+      ['default', 'manual'],
+      ['acceptEdits', 'acceptEdits'],
+      ['cokolwiek', 'manual'],
+    ])('migrates a stored normal with safeMode %s to %s', (safeMode, expected) => {
+      const settings = claudeSettings({
+        permissionMode: 'normal',
+        providerConfigs: { claude: { safeMode } },
+      });
+
+      ProviderSettingsCoordinator.projectActiveProviderState(settings);
+
+      expect(settings.permissionMode).toBe(expected);
+    });
+
+    it('migrates a stored normal without safeMode to acceptEdits', () => {
+      const settings = claudeSettings({ permissionMode: 'normal' });
+
+      ProviderSettingsCoordinator.projectActiveProviderState(settings);
+
+      expect(settings.permissionMode).toBe('acceptEdits');
+    });
+
+    it('fails closed to manual for an unknown stored value', () => {
+      const settings = claudeSettings({ permissionMode: 'zupelnie-obce' });
+
+      ProviderSettingsCoordinator.projectActiveProviderState(settings);
+
+      expect(settings.permissionMode).toBe('manual');
+    });
+
+    it.each(['yolo', 'plan', 'auto', 'manual', 'acceptEdits'])('keeps a stored %s', (mode) => {
+      const settings = claudeSettings({ permissionMode: mode });
+
+      ProviderSettingsCoordinator.projectActiveProviderState(settings);
+
+      expect(settings.permissionMode).toBe(mode);
+    });
+
+    it('migrates a saved Claude normal like the top-level field', () => {
+      const settings = claudeSettings({
+        settingsProvider: 'codex',
+        permissionMode: 'normal',
+        providerConfigs: {
+          claude: { safeMode: 'auto' },
+          codex: { enabled: true, discoveredModels: TEST_CODEX_CATALOG },
+        },
+        savedProviderPermissionMode: { claude: 'normal', codex: 'normal' },
+      });
+
+      const claudeSnapshot = ProviderSettingsCoordinator.getProviderSettingsSnapshot(settings, 'claude');
+      ProviderSettingsCoordinator.projectActiveProviderState(settings);
+
+      expect(claudeSnapshot.permissionMode).toBe('auto');
+      expect(settings.permissionMode).toBe('normal');
+    });
+
+    it('persists a Claude menu choice into the saved projection', () => {
+      const settings = claudeSettings({
+        permissionMode: 'auto',
+        savedProviderPermissionMode: { codex: 'normal' },
+      });
+
+      ProviderSettingsCoordinator.persistProjectedProviderState(settings);
+
+      expect(settings.savedProviderPermissionMode).toEqual({ codex: 'normal', claude: 'auto' });
+    });
+  });
 });

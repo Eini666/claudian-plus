@@ -126,6 +126,23 @@
       "message": "Background tasks (agents or commands) are running in this conversation. Switching the conversation in this tab will stop them.",
       "openNewTab": "Open in a new tab",
       "switchAnyway": "Switch anyway"
+    },
+    "permissionMode": {
+      "label": "權限模式",
+      "current": "權限模式：{mode}",
+      "changeFailed": "切換權限模式失敗",
+      "claude": {
+        "auto": "自動",
+        "autoDesc": "由 Claude 決定是否授權",
+        "manual": "手動",
+        "manualDesc": "修改前一律詢問",
+        "acceptEdits": "接受編輯",
+        "acceptEditsDesc": "自動接受所有檔案編輯",
+        "yolo": "YOLO",
+        "yoloDesc": "無須詢問，允許所有操作",
+        "plan": "Plan",
+        "planDesc": "Plans only, changes nothing (Shift+Tab returns)"
+      }
     }
   },
   "collab": {
@@ -720,10 +737,6 @@
     "loadUserSettings": {
       "name": "載入使用者 Claude 設定",
       "desc": "載入 ~/.claude/settings.json。啟用後，使用者的 Claude Code 權限規則可能繞過安全模式。"
-    },
-    "claudeSafeMode": {
-      "name": "安全模式",
-      "desc": "啟用 Safe 開關時使用的權限模式。"
     },
     "codexSafeMode": {
       "name": "安全模式",

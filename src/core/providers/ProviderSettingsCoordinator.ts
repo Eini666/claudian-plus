@@ -7,7 +7,7 @@ import {
   type ProviderProjectionKey,
   type ProviderProjectionMap,
 } from './settings/ProviderProjectionMap';
-import type { ProviderChatUIConfig, ProviderId } from './types';
+import type { ProviderChatUIConfig, ProviderId, ProviderPermissionModePolicy } from './types';
 
 export interface SettingsReconciliationResult {
   changed: boolean;
@@ -52,6 +52,19 @@ function normalizeToggleValue(
   }
 
   return allowedValues.has(value) ? value : undefined;
+}
+
+/** Known value stays, retired value migrates, anything else fails closed to the policy fallback. */
+function normalizeStoredPermissionMode(
+  policy: ProviderPermissionModePolicy,
+  allowedValues: Set<string>,
+  value: unknown,
+  settings: Record<string, unknown>,
+): string | undefined {
+  if (value === undefined) return undefined;
+  if (typeof value === 'string' && allowedValues.has(value)) return value;
+  const migrated = typeof value === 'string' ? policy.migrateValue?.(value, settings) : undefined;
+  return migrated !== undefined && allowedValues.has(migrated) ? migrated : policy.fallbackValue;
 }
 
 function mergeProviderSettings(
@@ -317,7 +330,10 @@ export class ProviderSettingsCoordinator {
     } else {
       delete savedBudget[providerId];
     }
-    if (typeof settings.permissionMode === 'string' && uiConfig.getPermissionModeToggle?.()) {
+    if (
+      typeof settings.permissionMode === 'string'
+      && (uiConfig.permissionModes || uiConfig.getPermissionModeToggle?.())
+    ) {
       savedPermissionMode[providerId] = settings.permissionMode;
     }
   }
@@ -422,6 +438,35 @@ export class ProviderSettingsCoordinator {
         settings.thinkingBudget = uiConfig.getDefaultReasoningValue(model, settings);
       }
       settings.thinkingBudget = normalizeReasoningValue(uiConfig, settings, model, settings.thinkingBudget);
+    }
+
+    const permissionPolicy = uiConfig.permissionModes ?? null;
+    if (permissionPolicy) {
+      // Options add plan for providers that offer it; the menu list is the source of truth.
+      const allowedValues = new Set([
+        ...permissionPolicy.values,
+        ...(uiConfig.getPermissionModeOptions?.(settings) ?? []).map(option => option.value),
+      ]);
+      const currentPermissionMode = normalizeStoredPermissionMode(
+        permissionPolicy,
+        allowedValues,
+        settings.permissionMode,
+        settings,
+      );
+      const projectedPermissionMode = normalizeStoredPermissionMode(
+        permissionPolicy,
+        allowedValues,
+        savedPermissionMode?.[providerId],
+        settings,
+      )
+        ?? normalizeToggleValue(uiConfig.resolvePermissionMode?.(settings), allowedValues)
+        ?? (shouldPreferCurrentProjection ? currentPermissionMode : undefined)
+        ?? normalizeToggleValue(permissionPolicy.defaultValue, allowedValues)
+        ?? currentPermissionMode;
+      if (projectedPermissionMode !== undefined) {
+        settings.permissionMode = projectedPermissionMode;
+      }
+      return;
     }
 
     const permissionToggle = uiConfig.getPermissionModeToggle?.() ?? null;

@@ -324,4 +324,24 @@ describe('claudeChatUIConfig', () => {
       expect(settings.effortLevel).toBe('high');
     });
   });
+
+  describe('permission modes', () => {
+    it('lists five options in menu order with only YOLO bypassing approvals', () => {
+      const options = claudeChatUIConfig.getPermissionModeOptions?.() ?? [];
+
+      expect(options.map(option => option.value)).toEqual(['auto', 'manual', 'acceptEdits', 'yolo', 'plan']);
+      expect(options.filter(option => option.bypassesApprovals).map(option => option.value)).toEqual(['yolo']);
+      expect(options.every(option => option.label.length > 0)).toBe(true);
+    });
+
+    it('exposes a fail-closed policy over the four non-plan modes', () => {
+      expect(claudeChatUIConfig.permissionModes?.values).toEqual(['auto', 'manual', 'acceptEdits', 'yolo']);
+      expect(claudeChatUIConfig.permissionModes?.fallbackValue).toBe('manual');
+      expect(claudeChatUIConfig.permissionModes?.migrateValue?.('normal', {})).toBe('acceptEdits');
+    });
+
+    it('no longer exposes the Safe/YOLO toggle', () => {
+      expect(claudeChatUIConfig.getPermissionModeToggle).toBeUndefined();
+    });
+  });
 });

@@ -16,8 +16,10 @@ import {
 } from '@/features/chat/tabs/TabLifecycle';
 import { TabManager } from '@/features/chat/tabs/TabManager';
 import {
+  changePermissionMode,
   initializeTabExecution,
   onProviderAvailabilityChanged,
+  togglePlanMode,
   updatePlanModeUI,
 } from '@/features/chat/tabs/TabProviderState';
 import {
@@ -2628,5 +2630,71 @@ describe('Tab provider execution ownership', () => {
 
     expect(plugin.settings.permissionMode).toBe('plan');
     expect(coordinator.setMode).not.toHaveBeenCalled();
+  });
+
+  it('menu: plan remembers the previous mode, leaving plan clears it', async () => {
+    const plugin = createPlugin();
+    const tab = await createTestTab({
+      plugin,
+      containerEl: createMockEl() as any,
+      conversation: createConversation(),
+    });
+    plugin.settings.permissionMode = 'acceptEdits';
+    const coordinator = coordinatorInstances[0];
+
+    await changePermissionMode(tab, plugin, 'plan');
+    expect(plugin.settings.permissionMode).toBe('plan');
+    expect(tab.state.prePlanPermissionMode).toBe('acceptEdits');
+    expect(coordinator.setMode).toHaveBeenLastCalledWith('plan');
+
+    await changePermissionMode(tab, plugin, 'yolo');
+    expect(plugin.settings.permissionMode).toBe('yolo');
+    expect(tab.state.prePlanPermissionMode).toBeNull();
+    expect(coordinator.setMode).toHaveBeenLastCalledWith('yolo');
+  });
+
+  it('Shift+Tab: auto -> plan -> back to auto', async () => {
+    const plugin = createPlugin();
+    const tab = await createTestTab({
+      plugin,
+      containerEl: createMockEl() as any,
+      conversation: createConversation(),
+    });
+    plugin.settings.permissionMode = 'auto';
+
+    await togglePlanMode(tab, plugin);
+    expect(plugin.settings.permissionMode).toBe('plan');
+    await togglePlanMode(tab, plugin);
+    expect(plugin.settings.permissionMode).toBe('auto');
+    expect(tab.state.prePlanPermissionMode).toBeNull();
+  });
+
+  it('Shift+Tab out of plan without a remembered mode falls back to the policy value', async () => {
+    const plugin = createPlugin();
+    const tab = await createTestTab({ plugin, containerEl: createMockEl() as any });
+    plugin.settings.permissionMode = 'plan';
+    const uiConfig = ProviderRegistry.getChatUIConfig('claude') as any;
+    uiConfig.permissionModes = { values: ['auto', 'manual'], fallbackValue: 'manual' };
+    try {
+      await togglePlanMode(tab, plugin);
+      expect(plugin.settings.permissionMode).toBe('manual');
+    } finally {
+      delete uiConfig.permissionModes;
+    }
+  });
+
+  it('rolls back and keeps plan memory clear when the live session rejects the mode', async () => {
+    const plugin = createPlugin();
+    const tab = await createTestTab({
+      plugin,
+      containerEl: createMockEl() as any,
+      conversation: createConversation(),
+    });
+    plugin.settings.permissionMode = 'manual';
+    coordinatorInstances[0].setMode.mockRejectedValueOnce(new Error('auto unavailable'));
+
+    await changePermissionMode(tab, plugin, 'plan');
+    expect(plugin.settings.permissionMode).toBe('manual');
+    expect(tab.state.prePlanPermissionMode).toBeNull();
   });
 });
