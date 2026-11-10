@@ -127,6 +127,12 @@
       "openNewTab": "Open in a new tab",
       "switchAnyway": "Switch anyway"
     },
+    "modelPanel": {
+      "model": "Model",
+      "effort": "Effort",
+      "budget": "Thinking",
+      "open": "Model and thinking"
+    },
     "permissionMode": {
       "label": "权限模式",
       "current": "权限模式：{mode}",

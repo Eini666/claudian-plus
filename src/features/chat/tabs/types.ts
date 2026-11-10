@@ -28,13 +28,12 @@ import type {
   ContextUsageMeter,
   ExternalContextSelector,
   ImagePickerButton,
-  ModelSelector,
   ModeSelector,
   PlanLimitsMeter,
   ServiceTierToggle,
-  ThinkingBudgetSelector,
 } from '../ui/InputToolbar';
 import type { InstructionModeManager } from '../ui/InstructionModeManager';
+import type { ModelThinkingPanel } from '../ui/ModelThinkingPanel';
 import type { NavigationSidebar } from '../ui/NavigationSidebar';
 import type { PermissionModeControl } from '../ui/PermissionModeMenu';
 import type { StatusPanel } from '../ui/StatusPanel';
@@ -127,9 +126,9 @@ export interface TabUIComponents {
   readonly fileContextManager: FileContextManager;
   readonly linkedContentController: LinkedContentController;
   readonly imageContextManager: ImageContextManager;
-  readonly modelSelector: ModelSelector;
+  readonly modelSelector: ModelThinkingPanel;
   readonly modeSelector: ModeSelector;
-  readonly thinkingBudgetSelector: ThinkingBudgetSelector;
+  readonly thinkingBudgetSelector: ModelThinkingPanel;
   readonly externalContextSelector: ExternalContextSelector;
   readonly permissionToggle: PermissionModeControl;
   readonly serviceTierToggle: ServiceTierToggle;

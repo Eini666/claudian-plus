@@ -127,6 +127,12 @@
       "openNewTab": "Open in a new tab",
       "switchAnyway": "Switch anyway"
     },
+    "modelPanel": {
+      "model": "Model",
+      "effort": "Effort",
+      "budget": "Thinking",
+      "open": "Model and thinking"
+    },
     "permissionMode": {
       "label": "권한 모드",
       "current": "권한 모드: {mode}",

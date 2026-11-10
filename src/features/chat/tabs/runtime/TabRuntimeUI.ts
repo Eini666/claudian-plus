@@ -498,6 +498,8 @@ function buildInputToolbar(
   options.registerCleanup('tab ari avatar', () => toolbarComponents.ariAvatarBadge?.destroy());
   options.registerCleanup('tab away toggle', () => toolbarComponents.awayToggle?.destroy());
   options.registerCleanup('tab environment panel', () => toolbarComponents.environmentSelector?.destroy());
+  // Otwarty panel trzyma listenery na dokumencie — zamkniecie karty musi je zdjac.
+  options.registerCleanup('tab model panel', () => toolbarComponents.modelSelector.close());
   // Prawy klik na zaznaczonym tekscie rozmowy: cytat, Brudnopis, notatka, zadanie.
   const selectionMenu = new MessageSelectionMenu(
     plugin.app,

@@ -180,7 +180,6 @@ button.claudian-input-nav-btn[aria-disabled='true'] {
 }
 
 /* Hide secondary text when the full toolbar would wrap. */
-.claudian-input-toolbar--compact .claudian-thinking-effort > .claudian-thinking-label-text,
 .claudian-input-toolbar--compact .claudian-context-meter-percent {
   display: none;
 }

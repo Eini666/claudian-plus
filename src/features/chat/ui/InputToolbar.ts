@@ -9,14 +9,12 @@ import type {
   ProviderChatUIConfig,
   ProviderModeSelectorConfig,
   ProviderPermissionModeToggleConfig,
-  ProviderReasoningOption,
   ProviderServiceTierToggleConfig,
   ProviderUIOption,
 } from '../../../core/providers/types';
 import type { PlanRateLimits, PlanRateLimitWindow, UsageInfo } from '../../../core/types';
 import { resolveAssistantName } from '../../../core/types/settings';
 import { t } from '../../../i18n/i18n';
-import { createProviderIconSvg } from '../../../shared/icons';
 import {
   accountShortLabel,
   describePanelUsage,
@@ -47,6 +45,7 @@ import { flagaPozaDomem, folderMostu } from '../services/ariTelefon';
 import { getAriWidget } from '../services/AriWidget';
 import { subscribeTurn } from '../services/TurnNotifier';
 import { EnvironmentSelector } from './EnvironmentSelector';
+import { ModelThinkingPanel } from './ModelThinkingPanel';
 import { PermissionModeMenu } from './PermissionModeMenu';
 
 interface ElectronOpenDialogResult {
@@ -165,111 +164,6 @@ export class AriAvatarBadge {
   }
 }
 
-export class ModelSelector {
-  private container: HTMLElement;
-  private buttonEl: HTMLElement | null = null;
-  private dropdownEl: HTMLElement | null = null;
-  private callbacks: ToolbarCallbacks;
-  constructor(parentEl: HTMLElement, callbacks: ToolbarCallbacks) {
-    this.callbacks = callbacks;
-    this.container = parentEl.createDiv({ cls: 'claudian-model-selector' });
-    this.render();
-    this.container.addEventListener('mouseenter', () => {
-      this.updateDisplay();
-      this.renderOptions();
-    });
-  }
-
-  private getAvailableModels() {
-    const settings = this.callbacks.getSettings();
-    const uiConfig = this.callbacks.getUIConfig();
-    return uiConfig.getModelOptions({
-      ...settings,
-      environmentVariables: this.callbacks.getEnvironmentVariables?.(),
-    });
-  }
-
-  private render() {
-    this.container.empty();
-
-    this.buttonEl = this.container.createDiv({ cls: 'claudian-model-btn' });
-    this.updateDisplay();
-
-    this.dropdownEl = this.container.createDiv({ cls: 'claudian-model-dropdown' });
-    this.renderOptions();
-  }
-
-  updateDisplay() {
-    if (!this.buttonEl) return;
-    const currentModel = this.callbacks.getSettings().model;
-    const models = this.getAvailableModels();
-    const modelInfo = models.find(m => m.value === currentModel);
-
-    const displayModel = modelInfo || models[0];
-    const icon = displayModel?.providerIcon
-      ?? this.callbacks.getUIConfig().getProviderIcon?.();
-
-    this.buttonEl.empty();
-
-    if (icon) {
-      createProviderIconSvg(icon, {
-        className: 'claudian-model-provider-icon',
-        height: 12,
-        parent: this.buttonEl,
-        width: 12,
-      });
-    }
-    const labelEl = this.buttonEl.createSpan({ cls: 'claudian-model-label' });
-    labelEl.setText(displayModel?.label || 'Unknown');
-  }
-
-  renderOptions() {
-    if (!this.dropdownEl) return;
-    this.dropdownEl.empty();
-
-    const currentModel = this.callbacks.getSettings().model;
-    const models = this.getAvailableModels();
-    const reversed = [...models].reverse();
-
-    let lastGroup: string | undefined;
-    for (const model of reversed) {
-      if (model.group && model.group !== lastGroup) {
-        const separator = this.dropdownEl.createDiv({ cls: 'claudian-model-group' });
-        separator.setText(model.group);
-        lastGroup = model.group;
-      }
-
-      const option = this.dropdownEl.createDiv({ cls: 'claudian-model-option' });
-      if (model.value === currentModel) {
-        option.addClass('selected');
-      }
-
-      const icon = model.providerIcon ?? this.callbacks.getUIConfig().getProviderIcon?.();
-      if (icon) {
-        createProviderIconSvg(icon, {
-          className: 'claudian-model-provider-icon',
-          height: 12,
-          parent: option,
-          width: 12,
-        });
-      }
-      option.createSpan({ text: model.label });
-      if (model.description) {
-        option.setAttribute('title', model.description);
-      }
-
-      option.addEventListener('click', (e) => {
-        e.stopPropagation();
-        runToolbarAction(async () => {
-          await this.callbacks.onModelChange(model.value);
-          this.updateDisplay();
-          this.renderOptions();
-        }, 'Failed to change model');
-      });
-    }
-  }
-}
-
 export class ModeSelector {
   private container: HTMLElement;
   private labelEl: HTMLElement | null = null;
@@ -357,150 +251,6 @@ export class ModeSelector {
     const nextValue = selectorConfig.value === active.value ? inactive.value : active.value;
     await this.callbacks.onModeChange(nextValue);
     this.updateDisplay();
-  }
-}
-
-export class ThinkingBudgetSelector {
-  private container: HTMLElement;
-  private effortEl: HTMLElement | null = null;
-  private effortGearsEl: HTMLElement | null = null;
-  private budgetEl: HTMLElement | null = null;
-  private budgetGearsEl: HTMLElement | null = null;
-  private callbacks: ToolbarCallbacks;
-
-  constructor(parentEl: HTMLElement, callbacks: ToolbarCallbacks) {
-    this.callbacks = callbacks;
-    this.container = parentEl.createDiv({ cls: 'claudian-thinking-selector' });
-    this.render();
-  }
-
-  private render() {
-    this.container.empty();
-
-    // Effort selector (for adaptive thinking models)
-    this.effortEl = this.container.createDiv({ cls: 'claudian-thinking-effort' });
-    const effortLabel = this.effortEl.createSpan({ cls: 'claudian-thinking-label-text' });
-    effortLabel.setText(t('chat.ui.effortLabel'));
-    this.effortGearsEl = this.effortEl.createDiv({ cls: 'claudian-thinking-gears' });
-
-    // Legacy budget selector (for custom models)
-    this.budgetEl = this.container.createDiv({ cls: 'claudian-thinking-budget' });
-    const budgetLabel = this.budgetEl.createSpan({ cls: 'claudian-thinking-label-text' });
-    budgetLabel.setText(t('chat.ui.budgetLabel'));
-    this.budgetGearsEl = this.budgetEl.createDiv({ cls: 'claudian-thinking-gears' });
-
-    this.updateDisplay();
-  }
-
-  private renderEffortGears() {
-    if (!this.effortGearsEl) return;
-    this.effortGearsEl.empty();
-
-    const currentEffort = this.callbacks.getSettings().effortLevel;
-    const uiConfig = this.callbacks.getUIConfig();
-    const settings = this.callbacks.getSettings();
-    const model = settings.model;
-    const options = uiConfig.getReasoningOptions(model, settings);
-    const currentInfo = options.find(e => e.value === currentEffort);
-
-    const currentEl = this.effortGearsEl.createDiv({ cls: 'claudian-thinking-current' });
-    currentEl.setText(currentInfo?.label || options[0]?.label || 'High');
-
-    const optionsEl = this.effortGearsEl.createDiv({ cls: 'claudian-thinking-options' });
-
-    for (const effort of [...options].reverse()) {
-      const gearEl = optionsEl.createDiv({ cls: 'claudian-thinking-gear' });
-      gearEl.setText(effort.label);
-      if (effort.description) {
-        gearEl.setAttribute('title', effort.description);
-      }
-
-      if (effort.value === currentEffort) {
-        gearEl.addClass('selected');
-      }
-
-      gearEl.addEventListener('click', (e) => {
-        e.stopPropagation();
-        runToolbarAction(async () => {
-          await this.callbacks.onEffortLevelChange(effort.value);
-          this.updateDisplay();
-        }, 'Failed to change effort level');
-      });
-    }
-  }
-
-  private renderBudgetGears() {
-    if (!this.budgetGearsEl) return;
-    this.budgetGearsEl.empty();
-
-    const currentBudget = this.callbacks.getSettings().thinkingBudget;
-    const uiConfig = this.callbacks.getUIConfig();
-    const settings = this.callbacks.getSettings();
-    const model = settings.model;
-    const options: ProviderReasoningOption[] = uiConfig.getReasoningOptions(model, settings);
-    const currentBudgetInfo = options.find(b => b.value === currentBudget);
-
-    const currentEl = this.budgetGearsEl.createDiv({ cls: 'claudian-thinking-current' });
-    currentEl.setText(currentBudgetInfo?.label || options[0]?.label || 'Off');
-
-    const optionsEl = this.budgetGearsEl.createDiv({ cls: 'claudian-thinking-options' });
-
-    for (const budget of [...options].reverse()) {
-      const gearEl = optionsEl.createDiv({ cls: 'claudian-thinking-gear' });
-      gearEl.setText(budget.label);
-      const tokens = budget.tokens ?? 0;
-      gearEl.setAttribute('title', tokens > 0 ? `${tokens.toLocaleString()} tokens` : 'Disabled');
-
-      if (budget.value === currentBudget) {
-        gearEl.addClass('selected');
-      }
-
-      gearEl.addEventListener('click', (e) => {
-        e.stopPropagation();
-        runToolbarAction(async () => {
-          await this.callbacks.onThinkingBudgetChange(budget.value);
-          this.updateDisplay();
-        }, 'Failed to change thinking budget');
-      });
-    }
-  }
-
-  updateDisplay() {
-    const capabilities = this.callbacks.getCapabilities();
-    if (capabilities.reasoningControl === 'none') {
-      this.effortEl?.addClass('claudian-hidden');
-      this.budgetEl?.addClass('claudian-hidden');
-      return;
-    }
-
-    const settings = this.callbacks.getSettings();
-    const model = settings.model;
-    const uiConfig = this.callbacks.getUIConfig();
-    const options = uiConfig.getReasoningOptions(model, settings);
-    const defaultValue = uiConfig.getDefaultReasoningValue(model, settings);
-    const shouldHide = options.length === 0
-      || (options.length === 1 && options[0]?.value === defaultValue);
-
-    if (shouldHide) {
-      this.effortEl?.addClass('claudian-hidden');
-      this.budgetEl?.addClass('claudian-hidden');
-      return;
-    }
-
-    const adaptive = uiConfig.isAdaptiveReasoningModel(model, settings);
-
-    if (this.effortEl) {
-      this.effortEl.toggleClass('claudian-hidden', !adaptive);
-    }
-    if (this.budgetEl) {
-      this.budgetEl.toggleClass('claudian-hidden', adaptive);
-    }
-
-    if (adaptive) {
-      this.renderEffortGears();
-    } else {
-      this.renderBudgetGears();
-    }
   }
 }
 
@@ -1655,9 +1405,9 @@ export function createInputToolbar(
   parentEl: HTMLElement,
   callbacks: ToolbarCallbacks
 ): {
-  modelSelector: ModelSelector;
+  modelSelector: ModelThinkingPanel;
   modeSelector: ModeSelector;
-  thinkingBudgetSelector: ThinkingBudgetSelector;
+  thinkingBudgetSelector: ModelThinkingPanel;
   contextUsageMeter: ContextUsageMeter;
   planLimitsMeter: PlanLimitsMeter;
   cacheWarmthPill: CacheWarmthPill;
@@ -1678,8 +1428,8 @@ export function createInputToolbar(
   const ariAvatarBadge = settings.showAvatarBadge !== false ? new AriAvatarBadge(parentEl, callbacks) : null;
   // Bez plakietki nikt inny nie przywraca okna awatara po starcie.
   if (!ariAvatarBadge) getAriWidget()?.setEnabled(callbacks.getAriWidgetEnabled?.() === true);
-  const modelSelector = new ModelSelector(parentEl, callbacks);
-  const thinkingBudgetSelector = new ThinkingBudgetSelector(parentEl, callbacks);
+  // Jeden panel obsluguje model i poziom myslenia; oba pola karty wskazuja na ten sam obiekt.
+  const modelSelector = new ModelThinkingPanel(parentEl, callbacks);
   const serviceTierToggle = new ServiceTierToggle(parentEl, callbacks);
   // Okrag kontekstu zostaje w kodzie (klasa upstreamu), ale nie dostaje juz danych —
   // kontekst rysuje trzeci pasek w PlanLimitsMeter, zeby caly rzad mial jeden jezyk
@@ -1710,7 +1460,7 @@ export function createInputToolbar(
     ariAvatarBadge,
     modelSelector,
     modeSelector,
-    thinkingBudgetSelector,
+    thinkingBudgetSelector: modelSelector,
     serviceTierToggle,
     contextUsageMeter,
     planLimitsMeter,

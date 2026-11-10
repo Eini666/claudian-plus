@@ -1084,11 +1084,11 @@ describe('Tab provider execution ownership', () => {
     });
     const modelOptions = Array.from(
       tab.dom.inputWrapper.querySelectorAll(
-        '.claudian-model-option',
+        '.claudian-model-panel-row',
       ) as NodeListOf<HTMLElement>,
     );
     const alternate = modelOptions.find(option =>
-      Array.from(option.children).some(child => child.textContent === 'Claude Alternate')
+      (option.querySelector('.claudian-model-panel-label')?.textContent === 'Claude Alternate')
     );
 
     (alternate as HTMLElement | undefined)?.click();
@@ -1131,11 +1131,11 @@ describe('Tab provider execution ownership', () => {
       });
       const modelOptions = Array.from(
         tab.dom.inputWrapper.querySelectorAll(
-          '.claudian-model-option',
+          '.claudian-model-panel-row',
         ) as NodeListOf<HTMLElement>,
       );
       const codex = modelOptions.find(option =>
-        Array.from(option.children).some(child => child.textContent === 'Codex')
+        (option.querySelector('.claudian-model-panel-label')?.textContent === 'Codex')
       );
 
       (codex as HTMLElement | undefined)?.click();
@@ -1192,11 +1192,11 @@ describe('Tab provider execution ownership', () => {
       });
       const modelOptions = Array.from(
         tab.dom.inputWrapper.querySelectorAll(
-          '.claudian-model-option',
+          '.claudian-model-panel-row',
         ) as NodeListOf<HTMLElement>,
       );
       const codex = modelOptions.find(option =>
-        Array.from(option.children).some(child => child.textContent === 'Codex')
+        (option.querySelector('.claudian-model-panel-label')?.textContent === 'Codex')
       );
 
       (codex as HTMLElement | undefined)?.click();
@@ -1238,11 +1238,11 @@ describe('Tab provider execution ownership', () => {
     const tab = await createTestTab({ plugin, containerEl: createMockEl() as any });
     const modelOptions = Array.from(
       tab.dom.inputWrapper.querySelectorAll(
-        '.claudian-model-option',
+        '.claudian-model-panel-row',
       ) as NodeListOf<HTMLElement>,
     );
     const alternate = modelOptions.find(option =>
-      Array.from(option.children).some(child => child.textContent === 'Claude Alternate')
+      (option.querySelector('.claudian-model-panel-label')?.textContent === 'Claude Alternate')
     );
 
     (alternate as HTMLElement | undefined)?.click();
@@ -1294,14 +1294,14 @@ describe('Tab provider execution ownership', () => {
       });
       const modelOptions = Array.from(
         tab.dom.inputWrapper.querySelectorAll(
-          '.claudian-model-option',
+          '.claudian-model-panel-row',
         ) as NodeListOf<HTMLElement>,
       );
       const first = modelOptions.find(option =>
-        Array.from(option.children).some(child => child.textContent === 'Codex First')
+        (option.querySelector('.claudian-model-panel-label')?.textContent === 'Codex First')
       );
       const latest = modelOptions.find(option =>
-        Array.from(option.children).some(child => child.textContent === 'Codex Latest')
+        (option.querySelector('.claudian-model-panel-label')?.textContent === 'Codex Latest')
       );
 
       (first as HTMLElement | undefined)?.click();
@@ -1342,11 +1342,11 @@ describe('Tab provider execution ownership', () => {
     });
     const modelOptions = Array.from(
       tab.dom.inputWrapper.querySelectorAll(
-        '.claudian-model-option',
+        '.claudian-model-panel-row',
       ) as NodeListOf<HTMLElement>,
     );
     const alternate = modelOptions.find(option =>
-      Array.from(option.children).some(child => child.textContent === 'Claude Alternate')
+      (option.querySelector('.claudian-model-panel-label')?.textContent === 'Claude Alternate')
     );
 
     (alternate as HTMLElement | undefined)?.click();
@@ -1386,11 +1386,11 @@ describe('Tab provider execution ownership', () => {
     });
     const modelOptions = Array.from(
       tab.dom.inputWrapper.querySelectorAll(
-        '.claudian-model-option',
+        '.claudian-model-panel-row',
       ) as NodeListOf<HTMLElement>,
     );
     const alternate = modelOptions.find(option =>
-      Array.from(option.children).some(child => child.textContent === 'Claude Alternate')
+      (option.querySelector('.claudian-model-panel-label')?.textContent === 'Claude Alternate')
     );
 
     (alternate as HTMLElement | undefined)?.click();
@@ -1419,11 +1419,11 @@ describe('Tab provider execution ownership', () => {
     });
     const modelOptions = Array.from(
       tab.dom.inputWrapper.querySelectorAll(
-        '.claudian-model-option',
+        '.claudian-model-panel-row',
       ) as NodeListOf<HTMLElement>,
     );
     const alternate = modelOptions.find(option =>
-      Array.from(option.children).some(child => child.textContent === 'Claude Alternate')
+      (option.querySelector('.claudian-model-panel-label')?.textContent === 'Claude Alternate')
     );
 
     (alternate as HTMLElement | undefined)?.click();

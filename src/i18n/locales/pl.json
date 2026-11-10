@@ -127,6 +127,12 @@
       "openNewTab": "Otwórz w nowej karcie",
       "switchAnyway": "Przełącz mimo to"
     },
+    "modelPanel": {
+      "model": "Model",
+      "effort": "Wysiłek",
+      "budget": "Myślenie",
+      "open": "Model i myślenie"
+    },
     "permissionMode": {
       "label": "Tryb uprawnień",
       "current": "Tryb uprawnień: {mode}",
