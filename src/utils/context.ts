@@ -21,13 +21,27 @@ const LINKED_CONTENT_SUFFIX_REGEX = new RegExp(`\\n\\n${LINKED_CONTENT_BLOCK_PAT
  * Pattern to match XML context tags appended to prompts.
  * These tags are always preceded by \n\n separator.
  * Matches: linked_note/current_note, editor_selection (with attributes), editor_cursor (with attributes),
- * context_files, canvas_selection, browser_selection
+ * context_files, canvas_selection, browser_selection, context_session
  */
-export const XML_CONTEXT_PATTERN = /\n\n<(?:linked_content|linked_note|current_note|editor_selection|editor_cursor|context_files|canvas_selection|browser_selection)[\s>]/;
+export const XML_CONTEXT_PATTERN = /\n\n<(?:linked_content|linked_note|current_note|editor_selection|editor_cursor|context_files|canvas_selection|browser_selection|context_session)[\s>]/;
 const BRACKET_CONTEXT_PATTERN = /\n\[(?:Current note|Editor selection from|Browser selection from|Canvas selection from)\b/;
 
 export function formatLinkedContent(contentPath: string): string {
   return `<${LINKED_CONTENT_TAG} path="${escapePromptXmlAttribute(contentPath)}" />`;
+}
+
+export interface SessionContextRef {
+  readonly id: string;
+  readonly title: string;
+  /** Ostatnia aktywnosc rozmowy (ms od epoki). */
+  readonly updated: number;
+}
+
+/** Sama wskazowka rozmowy — tresc agent czyta narzedziem `read_session`. */
+export function formatSessionContext(session: SessionContextRef): string {
+  const updated = new Date(session.updated).toISOString();
+  return `<context_session id="${escapePromptXmlAttribute(session.id)}" title="${
+    escapePromptXmlAttribute(session.title)}" updated="${updated}" />`;
 }
 
 export function appendLinkedContent(prompt: string, contentPath: string): string {

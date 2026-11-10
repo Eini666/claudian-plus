@@ -6,6 +6,7 @@ import {
   extractUserDisplayContent,
   extractUserQuery,
   formatLinkedContent,
+  formatSessionContext,
   stripLinkedContentContext,
   XML_CONTEXT_PATTERN,
 } from '../../../src/utils/context';
@@ -252,6 +253,22 @@ describe('extractUserDisplayContent', () => {
 
   it('does not hide ordinary XML-like user text', () => {
     expect(extractUserDisplayContent('What does <xml> mean?')).toBeUndefined();
+  });
+
+  it('hides a session mention block even when it is the only context', () => {
+    expect(extractUserDisplayContent('cześć\n\n<context_session id="x" title="t" updated="d" />'))
+      .toBe('cześć');
+  });
+});
+
+describe('formatSessionContext', () => {
+  it('formats a self-closing tag with escaped attributes and an ISO date', () => {
+    const updated = Date.UTC(2026, 10, 10, 8, 30, 0);
+    const block = formatSessionContext({ id: 'abc', title: 'Cytat "x" <y> & z', updated });
+    expect(block).toBe(
+      '<context_session id="abc" title="Cytat &quot;x&quot; &lt;y&gt; &amp; z" updated="2026-11-10T08:30:00.000Z" />',
+    );
+    expect(XML_CONTEXT_PATTERN.test(`pytanie\n\n${block}`)).toBe(true);
   });
 });
 

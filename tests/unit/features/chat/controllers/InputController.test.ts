@@ -184,6 +184,7 @@ function createFixture(overrides: Record<string, unknown> = {}) {
     getMessagesEl: () => createMockEl() as any,
     getFileContextManager: () => ({
       transformContextMentions: jest.fn((text: string) => text),
+      buildSessionMentionContext: () => [],
     }) as any,
     getLinkedContentController: () => linkedContentController as any,
     getImageContextManager: () => ({
@@ -461,6 +462,7 @@ describe('InputController coordinator execution', () => {
     const fixture = createFixture({
       getFileContextManager: () => ({
         transformContextMentions: (text: string) => `canonical:${text}`,
+        buildSessionMentionContext: () => [],
       }),
       getLinkedContentController: () => linkedContentController,
     });
@@ -528,6 +530,24 @@ describe('InputController coordinator execution', () => {
     expect(submission.images[0]).toBe(image);
   });
 
+  it('appends session mention blocks to the prompt but not to the bubble text', async () => {
+    const block = '<context_session id="s1" title="Port" updated="2026-11-10T08:00:00.000Z" />';
+    const fixture = createFixture({
+      getFileContextManager: () => ({
+        transformContextMentions: (text: string) => text,
+        buildSessionMentionContext: (text: string) => (text.includes('@[Port]') ? [block] : []),
+      }),
+    });
+
+    await fixture.controller.sendMessage({ content: 'co z @[Port] ' });
+
+    const submission = fixture.coordinator.execute.mock.calls[0][0] as ChatTurnSubmission;
+    expect(submission).toMatchObject({
+      canonicalText: `co z @[Port]\n\n${block}`,
+      rawDisplayText: 'co z @[Port]',
+    });
+  });
+
   it('keeps context feature-owned in the normalized submission', async () => {
     const linkedContentController = {
       getSnapshot: () => ({ mode: 'locked', path: 'note.md' }),
@@ -539,6 +559,7 @@ describe('InputController coordinator execution', () => {
       }),
       getFileContextManager: () => ({
         transformContextMentions: (text: string) => text,
+        buildSessionMentionContext: () => [],
       }),
       getLinkedContentController: () => linkedContentController,
     });

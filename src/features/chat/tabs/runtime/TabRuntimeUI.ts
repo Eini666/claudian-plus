@@ -13,6 +13,7 @@ import type {
   ProviderChatUIConfig,
   ProviderId,
 } from '../../../../core/providers/types';
+import { selectMentionableSessions } from '../../../../shared/composer-dropdown/sessionMentionFolder';
 import { getEnhancedPath } from '../../../../utils/env';
 import { getVaultPath } from '../../../../utils/path';
 import { MainChatComposerDropdown } from '../../composer/MainChatComposerDropdown';
@@ -68,6 +69,7 @@ function buildContextManagers(
   shell: TabRuntimeShellBundle,
   contextTray: ComposerContextTray,
   onUserModified: () => void,
+  runtimeRef: PublishedTabRuntimeRef,
 ): Pick<
   TabUIComponents,
   'fileContextManager' | 'imageContextManager' | 'linkedContentController'
@@ -78,6 +80,10 @@ function buildContextManagers(
     plugin.app,
     {
       getExternalContexts: () => externalContextSelector.getExternalContexts(),
+      getSessions: () => selectMentionableSessions(
+        plugin.getConversationList(),
+        runtimeRef.current()?.state.currentConversationId ?? null,
+      ),
       onAgentMentionSelect: () => onUserModified(),
     },
   );
@@ -563,6 +569,7 @@ export function buildTabRuntimeUI(
     shell,
     contextTray,
     onUserModified,
+    runtimeRef,
   );
   const catalogInfo = shell.providerCatalogResolver();
   const composerDropdown = buildComposerDropdown(

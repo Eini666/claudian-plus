@@ -376,6 +376,7 @@ function createTabExecutionCoordinator(
     ),
     persistence: plugin.executionPersistence,
     interactionPort,
+    sessionTools: plugin.sessionReadService,
     vaultWorkingDirectory: getVaultPath(plugin.app) ?? '.',
     createId: createTabMessageId,
     onRequestedEvent: event => (

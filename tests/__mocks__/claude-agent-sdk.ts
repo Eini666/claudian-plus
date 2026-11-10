@@ -359,3 +359,18 @@ export function query({ prompt, options }: { prompt: any; options: Options }): A
 
   return gen;
 }
+
+// In-process MCP server helpers: plain records so tests can call tool handlers directly.
+export function tool(
+  name: string,
+  description: string,
+  inputSchema: Record<string, unknown>,
+  handler: (args: any, extra: unknown) => Promise<unknown>,
+  extras?: { annotations?: Record<string, unknown> },
+) {
+  return { name, description, inputSchema, handler, annotations: extras?.annotations };
+}
+
+export function createSdkMcpServer(options: { name: string; tools?: Array<ReturnType<typeof tool>> }) {
+  return { type: 'sdk' as const, name: options.name, instance: { tools: options.tools ?? [] } };
+}

@@ -23,6 +23,8 @@ która przydaje się przy codziennej pracy z Claude Code po polsku. Opis orygina
 - **Archiwizacja rozmów.**
 - **Projekty** — grupowanie rozmów w projekty na szerokiej liście sesji: + przy projekcie zaczyna w nim
   rozmowę, a rozmowy można przeciągać między projektami, „Sesjami” i „Przypiętymi”.
+- **Czytanie innych rozmów** — agent widzi listę Twoich pozostałych rozmów i może je przeczytać
+  (`list_sessions`, `read_session`), a `@` w polu wpisywania wskazuje mu konkretną rozmowę.
 - **Awatar stanu** — widać, czy agent pracuje, czeka na odpowiedź, czy skończył; opcjonalnie
   okienko na pulpicie i sygnał na pasku zadań Windows, gdy Obsidian jest w tle.
 - **Telegram i głosówki** — piszesz (albo mówisz) do agenta z telefonu, a poza domem dostajesz od niego

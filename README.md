@@ -23,6 +23,8 @@ a layer that helps in day-to-day work with Claude Code. Original plugin descript
 - **Conversation archiving.**
 - **Projects** — group conversations into projects in the wide session list: + next to a project starts a
   conversation in it, and you can drag conversations between projects, Sessions and Pinned.
+- **Reading other sessions** — the agent can list your other conversations and read them (`list_sessions`,
+  `read_session`), and `@` in the composer lets you point it at a specific conversation.
 - **Status avatar** — see whether the agent is working, waiting for you or done; optionally a
   desktop window and a Windows taskbar signal while Obsidian is in the background.
 - **Telegram and voice messages** — message (or talk to) the agent from your phone; when you are away, it

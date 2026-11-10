@@ -84,6 +84,17 @@ export {
   type ProviderSessionStatus,
 } from './ProviderSessionSnapshot';
 export {
+  type ProviderSessionListRequest,
+  type ProviderSessionReadRequest,
+  type ProviderSessionToolPort,
+  type ProviderSessionToolResult,
+  SESSION_TOOL_LIST,
+  SESSION_TOOL_LIST_FULL_NAME,
+  SESSION_TOOL_READ,
+  SESSION_TOOL_READ_FULL_NAME,
+  SESSION_TOOL_SERVER,
+} from './ProviderSessionToolPort';
+export {
   type ChatRewindConflict,
   type ChatRewindMode,
   type ChatRewindPreview,

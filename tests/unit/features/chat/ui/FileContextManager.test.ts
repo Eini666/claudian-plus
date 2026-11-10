@@ -186,4 +186,44 @@ describe('FileContextManager', () => {
     manager.destroy();
     expect((healthy.app as any).vault.offref).toHaveBeenCalledTimes(2);
   });
+
+  describe('session mentions', () => {
+    const updated = Date.UTC(2026, 10, 9, 12, 0, 0);
+    const sessions = [
+      { id: 'aaaa1111', lastActivityAt: updated, title: 'Projekty — port' },
+      { id: 'bbbb2222', lastActivityAt: updated - 1000, title: 'Głos' },
+    ];
+
+    async function attachSession(manager: FileContextManager, title: string): Promise<string> {
+      const source = manager.getMentionSource();
+      const match = source.match(`@${title}`, title.length + 1)!;
+      const items = await source.load(match, new AbortController().signal);
+      const item = items.find(entry => entry.kind === 'value' && entry.label === title);
+      if (!item || item.kind !== 'value') throw new Error(`No session item for ${title}`);
+      const action = source.select(item, match);
+      if (action.kind !== 'replace') throw new Error('Expected a replace action');
+      action.onApplied?.();
+      return action.text;
+    }
+
+    it('emits one block per mentioned session still present in the text', async () => {
+      const { app } = createMockApp();
+      const manager = new FileContextManager(app, { getSessions: () => sessions });
+
+      const first = await attachSession(manager, 'Projekty — port');
+      const second = await attachSession(manager, 'Głos');
+      expect(first).toBe('@[Projekty — port] ');
+
+      expect(manager.buildSessionMentionContext(`zobacz ${first}`)).toEqual([
+        `<context_session id="aaaa1111" title="Projekty — port" updated="${new Date(updated).toISOString()}" />`,
+      ]);
+      expect(manager.buildSessionMentionContext(`${first}i ${second}`)).toHaveLength(2);
+      expect(manager.buildSessionMentionContext(`${first}${first}`)).toHaveLength(1);
+      expect(manager.buildSessionMentionContext('token skasowany')).toEqual([]);
+
+      manager.clearAttachments();
+      expect(manager.buildSessionMentionContext(first)).toEqual([]);
+      manager.destroy();
+    });
+  });
 });

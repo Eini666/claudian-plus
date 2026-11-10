@@ -6,6 +6,12 @@ import { externalContextScanner } from '@/utils/externalContextScanner';
 
 import { formatVaultFileMention } from '../mention/formatMention';
 import type { FolderMentionItem } from '../mention/types';
+import {
+  loadSessionFolderQuery,
+  type SessionMentionEntry,
+  type SessionMentionValue,
+  sessionRootItems,
+} from './sessionMentionFolder';
 import type {
   ComposerDropdownFolderItem,
   ComposerDropdownItem,
@@ -18,7 +24,8 @@ import type {
 type MentionValue =
   | { readonly kind: 'agent'; readonly agentId: string }
   | { readonly kind: 'context-file'; readonly absolutePath: string }
-  | { readonly kind: 'vault-file'; readonly path: string };
+  | { readonly kind: 'vault-file'; readonly path: string }
+  | SessionMentionValue;
 
 export interface MentionSourceCallbacks {
   readonly getCachedVaultFiles: () => readonly TFile[];
@@ -27,6 +34,8 @@ export interface MentionSourceCallbacks {
   readonly normalizePathForVault: (path: string | undefined | null) => string | null;
   readonly onAgentMentionSelect?: (agentId: string) => void;
   readonly onAttachFile: (path: string) => void;
+  readonly getSessions?: () => readonly SessionMentionEntry[];
+  readonly onAttachSession?: (session: SessionMentionValue) => void;
 }
 
 export interface MentionSourceOptions {
@@ -70,6 +79,9 @@ export class MentionSource implements ComposerDropdownSource {
     if (query.startsWith('agents/')) {
       return this.agentFolder().load(match.query.slice('agents/'.length), signal);
     }
+    const getSessions = this.callbacks.getSessions ?? (() => []);
+    const sessionFolderItems = loadSessionFolderQuery(getSessions, match.query);
+    if (sessionFolderItems) return sessionFolderItems;
 
     const contextEntries = buildExternalContextDisplayEntries([
       ...this.callbacks.getExternalContexts(),
@@ -87,6 +99,7 @@ export class MentionSource implements ComposerDropdownSource {
     if (this.agentService?.searchAgents('').length && 'agents'.includes(query)) {
       items.push(this.agentFolder());
     }
+    items.push(...sessionRootItems(getSessions, query));
 
     const seenContextNames = new Set<string>();
     for (const entry of contextEntries) {
@@ -149,6 +162,7 @@ export class MentionSource implements ComposerDropdownSource {
         if (value.kind === 'agent') this.callbacks.onAgentMentionSelect?.(value.agentId);
         if (value.kind === 'context-file') this.callbacks.onAttachFile(value.absolutePath);
         if (value.kind === 'vault-file') this.callbacks.onAttachFile(value.path);
+        if (value.kind === 'session') this.callbacks.onAttachSession?.(value);
       },
     };
   }

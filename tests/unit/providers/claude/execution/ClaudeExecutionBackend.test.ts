@@ -3,13 +3,17 @@ import '@/providers';
 import * as sdkModule from '@anthropic-ai/claude-agent-sdk';
 import { createProviderRecoveryTestHarness } from '@test/unit/features/chat/execution/ProviderRecoveryTestHarness';
 
-import type {
-  ProviderExecutionEvent,
-  ProviderExecutionRequest,
-  ProviderInteractionPort,
-  ProviderSessionConfig,
-  ProviderSessionEvent,
-  ProviderSessionSnapshot,
+import {
+  type ProviderExecutionEvent,
+  type ProviderExecutionRequest,
+  type ProviderInteractionPort,
+  type ProviderSessionConfig,
+  type ProviderSessionEvent,
+  type ProviderSessionSnapshot,
+  type ProviderSessionToolPort,
+  SESSION_TOOL_LIST_FULL_NAME,
+  SESSION_TOOL_READ_FULL_NAME,
+  SESSION_TOOL_SERVER,
 } from '@/core/execution';
 import type { ProviderHost } from '@/core/providers/ProviderHost';
 import type { Conversation } from '@/core/types';
@@ -1693,6 +1697,104 @@ describe('ClaudeExecutionBackend', () => {
     )).resolves.toEqual(expect.objectContaining({
       canRewind: false,
     }));
+  });
+
+  describe('session tools (wzmianki sesji)', () => {
+    const sessionToolNames = [SESSION_TOOL_LIST_FULL_NAME, SESSION_TOOL_READ_FULL_NAME];
+    const toolOptions = {
+      signal: new AbortController().signal,
+      toolUseID: 'tool-1',
+      requestId: 'request-1',
+    };
+
+    function createSessionToolPort(): ProviderSessionToolPort {
+      return {
+        listSessions: jest.fn().mockResolvedValue({ ok: true, text: 'none' }),
+        readSession: jest.fn().mockResolvedValue({ ok: true, text: 'none' }),
+      };
+    }
+
+    async function runTurn(
+      config: ProviderSessionConfig,
+      requests: ProviderExecutionRequest[] = [createRequest()],
+    ): Promise<void> {
+      sdkMock.setMockMessages([
+        { type: 'system', subtype: 'init', session_id: 'session-1' },
+        { type: 'result', subtype: 'success' },
+      ], { appendResult: false });
+      const session = new ClaudeExecutionBackend(createHost(), createServices().services)
+        .createSession(config);
+      for (const request of requests) {
+        await collectEvents(session.execute(request).events);
+      }
+    }
+
+    it('registers the claudian server and pre-allows both tools when a port is bound', async () => {
+      await runTurn(createConfig({ sessionTools: createSessionToolPort() }));
+
+      const options = sdkMock.getLastOptions();
+      expect(options?.mcpServers?.[SESSION_TOOL_SERVER]).toEqual(
+        expect.objectContaining({ type: 'sdk', name: SESSION_TOOL_SERVER }),
+      );
+      expect(options?.allowedTools).toEqual(expect.arrayContaining(sessionToolNames));
+    });
+
+    it('adds no claudian server without a port', async () => {
+      await runTurn(createConfig());
+
+      expect(sdkMock.getLastOptions()?.mcpServers?.[SESSION_TOOL_SERVER]).toBeUndefined();
+    });
+
+    it('adds no claudian server for a passive tool policy even with a port', async () => {
+      await runTurn(
+        createConfig({ sessionTools: createSessionToolPort() }),
+        [createRequest({ toolPolicy: { kind: 'passive' } })],
+      );
+
+      expect(sdkMock.getLastOptions()?.mcpServers?.[SESSION_TOOL_SERVER]).toBeUndefined();
+    });
+
+    it('keeps the same process across turns with a port (stable restartKey)', async () => {
+      await runTurn(
+        createConfig({ sessionTools: createSessionToolPort() }),
+        [createRequest(), createRequest({ input: [{ type: 'text', text: 'Again' }] })],
+      );
+
+      expect(sdkMock.getQueryCallCount()).toBe(1);
+    });
+
+    it('allows session tools without an approval card in Manual mode', async () => {
+      const interactionPort = createInteractionPort();
+      await runTurn(
+        createConfig({ interactionPort, sessionTools: createSessionToolPort() }),
+        [createRequest({
+          configuration: {
+            systemInstructions: { kind: 'provider-default' },
+            model: 'claude-sonnet-4-5',
+            reasoning: 'medium',
+            permissionMode: 'manual',
+          },
+        })],
+      );
+
+      const canUseTool = sdkMock.getLastOptions()?.canUseTool;
+      const input = { sessionId: 'conv-2' };
+      await expect(canUseTool?.(SESSION_TOOL_READ_FULL_NAME, input, toolOptions))
+        .resolves.toEqual({ behavior: 'allow', updatedInput: input });
+      expect(interactionPort.requestApproval).not.toHaveBeenCalled();
+    });
+
+    it('does not cut session tools with an allow-list policy', async () => {
+      await runTurn(
+        createConfig({ sessionTools: createSessionToolPort() }),
+        [createRequest({ toolPolicy: { kind: 'allow-list', names: ['Read'] } })],
+      );
+
+      const options = sdkMock.getLastOptions();
+      expect(options?.mcpServers?.[SESSION_TOOL_SERVER]).toBeDefined();
+      await expect(options?.canUseTool?.(SESSION_TOOL_LIST_FULL_NAME, {}, toolOptions))
+        .resolves.toEqual({ behavior: 'allow', updatedInput: {} });
+    });
   });
 
   describe('steer (25.10, sekwencje zmierzone na CLI 2.1.310)', () => {

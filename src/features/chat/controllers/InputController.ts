@@ -1079,10 +1079,16 @@ export class InputController {
     // Znaczniki dlugich wklejek podmieniamy PO wzmiankach, zeby `@` we wklejonym
     // tekscie nie zamienialo sie w zalacznik. W dymku zostaje znacznik (displayContent).
     const transformedText = expandPastedText(this.deps.getInputEl(), mentionText);
+    // Wzmianki rozmow (D6): sama wskazowka w prompcie, dymek zostaje z tokenem.
+    const sessionBlocks = !isCompact && fileContextManager
+      ? fileContextManager.buildSessionMentionContext(options.content)
+      : [];
     return {
       displayContent: options.content,
       turnRequest: {
-        text: transformedText,
+        text: sessionBlocks.length > 0
+          ? `${transformedText}\n\n${sessionBlocks.join('\n')}`
+          : transformedText,
         images: options.images,
         linkedContentPath,
         editorSelection: editorContext,

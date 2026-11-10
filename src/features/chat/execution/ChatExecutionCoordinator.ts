@@ -37,6 +37,7 @@ import type {
 } from '@/core/types';
 import { toError } from '@/utils/error';
 
+import type { SessionReadService } from '../session-tools/SessionReadService';
 import {
   ExecutionSessionSupervisor,
 } from './ExecutionSessionSupervisor';
@@ -135,6 +136,8 @@ export interface ChatExecutionCoordinatorDeps {
   readonly resolveBackend: (providerId: ProviderId) => ProviderExecutionBackend;
   readonly persistence: ChatExecutionPersistence;
   readonly interactionPort: ProviderInteractionPort;
+  /** Bound to the conversation at acquire, so the backend never learns its id. */
+  readonly sessionTools?: SessionReadService;
   readonly vaultWorkingDirectory: string;
   readonly createId: () => string;
   readonly onRequestedEvent?: (
@@ -342,6 +345,7 @@ export class ChatExecutionCoordinator {
           resumeSeed: conversation.resumeSeed,
           vaultWorkingDirectory: this.deps.vaultWorkingDirectory,
           interactionPort: this.fencedInteractionPort,
+          sessionTools: this.deps.sessionTools?.bindCaller(conversation.conversationId),
         },
         (reason) => this.handleLeaseInvalidation(reason),
         (event) => this.handleSessionEvent(event),

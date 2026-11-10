@@ -29,6 +29,7 @@ import { appendMcpIcon } from '../../../shared/icons';
 import { parseApplyPatchDiffs, parseFileUpdateChangeDiffs } from '../../../utils/diff';
 import { setupCollapsible } from './collapsible';
 import { renderDiffContent, renderDiffStats } from './DiffRenderer';
+import { getSessionToolName, getSessionToolSummary, isSessionTool, renderSessionToolResult } from './sessionToolPresentation';
 import { renderTodoItems } from './todoUtils';
 
 export function setToolIcon(el: HTMLElement, name: string): void {
@@ -71,7 +72,7 @@ export function getToolName(name: string, input: Record<string, unknown>): strin
     case TOOL_EXIT_PLAN_MODE:
       return 'Plan complete';
     default:
-      return name;
+      return getSessionToolName(name, input) ?? name;
   }
 }
 
@@ -178,7 +179,7 @@ export function getToolLabel(name: string, input: Record<string, unknown>): stri
         const summary = getAgentLifecycleSummary(name, input);
         return summary ? `${name}: ${summary}` : name;
       }
-      return name;
+      return getSessionToolName(name, input) ?? name;
   }
 }
 
@@ -697,6 +698,10 @@ export function renderExpandedContent(
     renderAgentLifecycleExpanded(container, resolvedResult);
     return;
   }
+  if (isSessionTool(toolName)) {
+    renderSessionToolResult(container, toolName, resolvedResult);
+    return;
+  }
 
   switch (toolName) {
     case TOOL_BASH:
@@ -853,7 +858,7 @@ function createToolElementStructure(
   nameEl.setText(getToolName(toolCall.name, toolCall.input));
 
   const summaryEl = header.createSpan({ cls: 'claudian-tool-summary' });
-  summaryEl.setText(getToolSummary(toolCall.name, toolCall.input));
+  summaryEl.setText(getSessionToolSummary(toolCall.name, toolCall.result) ?? getToolSummary(toolCall.name, toolCall.input));
 
   const currentTaskEl = toolCall.name === TOOL_TODO_WRITE
     ? createCurrentTaskPreview(header, toolCall.input)
@@ -1113,6 +1118,8 @@ export function updateToolCallResult(
   if (statusEl) {
     setGenericToolHeaderRight(statusEl, toolCall);
   }
+  const sessionSummary = getSessionToolSummary(toolCall.name, toolCall.result);
+  if (sessionSummary) toolEl.querySelector<HTMLElement>('.claudian-tool-summary')?.setText(sessionSummary);
 
   if (toolCall.name === TOOL_ASK_USER_QUESTION) {
     const content = toolEl.querySelector('.claudian-tool-content') as HTMLElement;

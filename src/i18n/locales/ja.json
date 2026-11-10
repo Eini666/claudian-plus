@@ -167,6 +167,10 @@
       "removeFrom": "Remove from project",
       "pickPlaceholder": "Choose a project",
       "pickNew": "New project…"
+    },
+    "sessionMention": {
+      "folder": "Sessions",
+      "detail": "conversation · {date}"
     }
   },
   "collab": {

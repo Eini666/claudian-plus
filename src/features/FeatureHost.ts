@@ -15,6 +15,7 @@ import type {
 import type { AccountsPanelHost } from './accounts/AccountsPanelHost';
 import type { ChatExecutionPersistence } from './chat/execution/ChatExecutionCoordinator';
 import type { WarmExecutionPool } from './chat/execution/WarmExecutionPool';
+import type { SessionReadService } from './chat/session-tools/SessionReadService';
 import type { AssembledTabRuntime, TabId, TabManagerViewHost } from './chat/tabs/types';
 import type { BuiltinBridge } from './telegram/BuiltinBridge';
 
@@ -76,6 +77,8 @@ export interface FeatureHost {
   readonly app: App;
   readonly chatModelSelection: ChatModelSelectionPort;
   readonly executionPersistence: ChatExecutionPersistence;
+  /** Read-only access to other conversations for the agent's session tools. */
+  readonly sessionReadService?: SessionReadService;
   readonly providerHost: ProviderHost;
   readonly settings: ClaudianSettings;
   readonly storage: SharedAppStorage;

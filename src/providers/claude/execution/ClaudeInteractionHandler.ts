@@ -4,9 +4,11 @@ import type {
   PermissionResult,
 } from '@anthropic-ai/claude-agent-sdk';
 
-import type {
-  ProviderInteractionDismissReason,
-  ProviderInteractionPort,
+import {
+  type ProviderInteractionDismissReason,
+  type ProviderInteractionPort,
+  SESSION_TOOL_LIST_FULL_NAME,
+  SESSION_TOOL_READ_FULL_NAME,
 } from '../../../core/execution';
 import { getActionDescription } from '../../../core/security/approvalRules';
 import {
@@ -15,6 +17,8 @@ import {
 } from '../../../core/tools/toolNames';
 import type { PermissionMode } from '../../../core/types/settings';
 import { buildPersistentPermissionUpdates } from '../security/ClaudePermissionUpdates';
+
+const SESSION_TOOL_FULL_NAMES = new Set([SESSION_TOOL_LIST_FULL_NAME, SESSION_TOOL_READ_FULL_NAME]);
 
 export interface ClaudeExecutionInteractionDeps {
   readonly interactionPort: ProviderInteractionPort;
@@ -43,6 +47,10 @@ export class ClaudeInteractionHandler {
         behavior: 'deny',
         message: `Tool "${toolName}" is not allowed by this execution policy.`,
       };
+    }
+    // Read-only session tools never ask, in any permission mode (Manual and Plan too).
+    if (SESSION_TOOL_FULL_NAMES.has(toolName)) {
+      return { behavior: 'allow', updatedInput: input };
     }
 
     const turnId = this.deps.getTurnId();

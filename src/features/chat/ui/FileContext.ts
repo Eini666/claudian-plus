@@ -3,8 +3,10 @@ import { TFolder } from 'obsidian';
 
 import type { AgentMentionProvider } from '../../../core/providers/types';
 import { MentionSource } from '../../../shared/composer-dropdown/MentionSource';
+import type { SessionMentionEntry } from '../../../shared/composer-dropdown/sessionMentionFolder';
 import type { FolderMentionItem } from '../../../shared/mention/types';
 import { VaultMentionDataProvider } from '../../../shared/mention/VaultMentionDataProvider';
+import { formatSessionContext, type SessionContextRef } from '../../../utils/context';
 import {
   createExternalContextLookupGetter,
   isMentionStart,
@@ -20,6 +22,8 @@ import {
 
 export interface FileContextCallbacks {
   getExternalContexts?: () => readonly string[];
+  /** Rozmowy do wzmianki `@` — bez biezacej rozmowy karty i bez zarchiwizowanych. */
+  getSessions?: () => readonly SessionMentionEntry[];
   onAgentMentionSelect?: (agentId: string) => void;
 }
 
@@ -29,6 +33,8 @@ export interface FileContextCallbacks {
  */
 export class FileContextManager {
   private readonly attachedFiles = new Set<string>();
+  /** Token `@[Tytul]` w tekscie → wskazana rozmowa (D6). */
+  private readonly sessionMentions = new Map<string, SessionContextRef>();
   private readonly mentionDataProvider: VaultMentionDataProvider;
   private readonly mentionSource: MentionSource;
   private deleteEventRef: EventRef | null = null;
@@ -44,6 +50,12 @@ export class FileContextManager {
       onAttachFile: filePath => this.attachedFiles.add(filePath),
       onAgentMentionSelect: agentId => this.callbacks.onAgentMentionSelect?.(agentId),
       getExternalContexts: () => this.callbacks.getExternalContexts?.() ?? [],
+      getSessions: () => this.callbacks.getSessions?.() ?? [],
+      onAttachSession: session => this.sessionMentions.set(session.token, {
+        id: session.id,
+        title: session.title,
+        updated: session.lastActivityAt,
+      }),
       getCachedVaultFolders: () => this.mentionDataProvider.getCachedVaultFolders(),
       getCachedVaultFiles: () => this.mentionDataProvider.getCachedVaultFiles(),
       normalizePathForVault: rawPath => this.normalizePathForVault(rawPath),
@@ -73,6 +85,19 @@ export class FileContextManager {
 
   clearAttachments(): void {
     this.attachedFiles.clear();
+    this.sessionMentions.clear();
+  }
+
+  /** Bloki `<context_session>` dla tokenow wciaz obecnych w tekscie (usuniety token = brak bloku). */
+  buildSessionMentionContext(text: string): string[] {
+    const blocks: string[] = [];
+    const seenIds = new Set<string>();
+    for (const [token, session] of this.sessionMentions) {
+      if (!text.includes(token) || seenIds.has(session.id)) continue;
+      seenIds.add(session.id);
+      blocks.push(formatSessionContext(session));
+    }
+    return blocks;
   }
 
   getCachedVaultFiles(): readonly TFile[] {

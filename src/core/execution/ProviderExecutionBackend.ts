@@ -1,6 +1,7 @@
 import type { ProviderId } from '../types/provider';
 import type { ProviderExecutionSession } from './ProviderExecutionSession';
 import type { ProviderInteractionPort } from './ProviderInteractionPort';
+import type { ProviderSessionToolPort } from './ProviderSessionToolPort';
 
 export type ProviderSessionLifecycle = 'persistent' | 'ephemeral';
 
@@ -21,12 +22,15 @@ export interface ProviderSessionConfig {
   readonly resumeSeed?: ProviderNativeResumeSeed;
   readonly vaultWorkingDirectory: string;
   readonly interactionPort: ProviderInteractionPort;
+  /** Session read tools, already bound to the calling conversation; absent = no tools. */
+  readonly sessionTools?: ProviderSessionToolPort;
 }
 
 /**
  * Cheap provider registration entry point. Active native lifecycle belongs to
  * the independently created session, never to the backend object. Neither this
- * configuration nor the backend receives a Claudian conversation identity.
+ * configuration nor the backend receives a Claudian conversation identity;
+ * `sessionTools` carries it only inside a port bound by the chat layer.
  * The resume seed is fixed for the lifetime of the created session.
  */
 export interface ProviderExecutionBackend {

@@ -1,3 +1,4 @@
+import { SESSION_TOOL_LIST_FULL_NAME, SESSION_TOOL_READ_FULL_NAME } from '../execution/ProviderSessionToolPort';
 import {
   TOOL_AGENT_OUTPUT,
   TOOL_APPLY_PATCH,
@@ -71,6 +72,8 @@ const TOOL_ICONS: Record<string, string> = {
 export const MCP_ICON_MARKER = '__mcp_icon__';
 
 export function getToolIcon(toolName: string): string {
+  if (toolName === SESSION_TOOL_LIST_FULL_NAME) return 'list';
+  if (toolName === SESSION_TOOL_READ_FULL_NAME) return 'messages-square';
   if (toolName.startsWith('mcp__')) {
     return MCP_ICON_MARKER;
   }

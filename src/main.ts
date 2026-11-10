@@ -96,6 +96,7 @@ import { RENDERED_FENCE_LANGUAGES } from './features/chat/rendering/DisplayOnlyC
 import { disposeAriWidget } from './features/chat/services/AriWidget';
 import { isInactiveArchiveCandidate } from './features/chat/services/inactiveArchive';
 import { setAssistantNameSource } from './features/chat/services/TurnNotifier';
+import { SessionReadService } from './features/chat/session-tools/SessionReadService';
 import {
   COLLAB_DETAIL_VIEW_TYPE,
   CollabDetailView,
@@ -221,6 +222,7 @@ export default class ClaudianPlugin extends Plugin {
   private chatModelSelectionCoordinator!: ChatModelSelectionCoordinator;
   private pinnedLinkedContentPaths!: PinnedLinkedContentPathCoordinator;
   private conversationRepository!: ConversationRepository;
+  sessionReadService!: SessionReadService;
   private projectStore!: ProjectStore;
   private pendingSessionMetadataScan = false;
   private pendingEnvironmentInvalidationGenerations = new Map<ProviderId, number>();
@@ -1267,6 +1269,7 @@ export default class ClaudianPlugin extends Plugin {
       persistence: sharedStorage.conversationPersistence,
       onConversationDeleted: (conversationId) => this.resetDeletedConversationTabs(conversationId),
     });
+    this.sessionReadService = new SessionReadService(this.conversationRepository);
     this.projectStore = new ProjectStore({
       settingsCoordinator: this.settingsCoordinator,
       getSettings: () => this.settings,

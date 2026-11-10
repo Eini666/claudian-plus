@@ -167,6 +167,10 @@
       "removeFrom": "Usuń z projektu",
       "pickPlaceholder": "Wybierz projekt",
       "pickNew": "Nowy projekt…"
+    },
+    "sessionMention": {
+      "folder": "Sesje",
+      "detail": "rozmowa · {date}"
     }
   },
   "settings": {

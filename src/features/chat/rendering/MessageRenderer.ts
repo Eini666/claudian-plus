@@ -46,6 +46,7 @@ import {
   appendInterruptIndicator as appendInterruptIndicatorEl,
   foldInterruptedTurn as foldInterruptedTurnEl,
 } from './InterruptedTurnFold';
+import { setSessionTitleResolver } from './sessionToolPresentation';
 import { resolveSubagentAdapter } from './subagentAdapterResolution';
 import {
   renderStoredAsyncSubagent,
@@ -96,6 +97,7 @@ export class MessageRenderer {
   ) {
     this.app = plugin.app;
     this.plugin = plugin;
+    setSessionTitleResolver(id => plugin.getConversationList?.().find(meta => meta.id === id)?.title);
     this.component = component;
     this.messagesEl = messagesEl;
     this.rewindCallback = rewindCallback;
