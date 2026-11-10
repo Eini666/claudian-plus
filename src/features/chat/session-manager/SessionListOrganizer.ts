@@ -1,5 +1,6 @@
 import type {
   ConversationMeta,
+  ProjectRecord,
   SessionManagerOrganization,
   SessionManagerSort,
 } from '../../../core/types';
@@ -7,14 +8,22 @@ import { isProvisionalNotePath } from './ProvisionalNoteNames';
 
 export { isProvisionalNotePath } from './ProvisionalNoteNames';
 
-export type SessionListSectionKind = 'list' | 'content' | 'ungrouped' | 'missing';
+export type SessionListSectionKind = 'list' | 'content' | 'ungrouped' | 'missing' | 'project';
 
 export interface SessionListSection {
   key: string;
   kind: SessionListSectionKind;
   label?: string;
   contentPath?: string;
+  projectId?: string;
   conversations: ConversationMeta[];
+}
+
+export interface ProjectGrouping {
+  pinnedProjects: SessionListSection[];
+  projects: SessionListSection[];
+  /** Conversations without a live project, plus individually pinned ones (Pinned renders them). */
+  rest: ConversationMeta[];
 }
 
 interface OrganizeSessionListOptions {
@@ -148,4 +157,60 @@ export function organizeSessionList(
   return sections.sort((left, right) => (
     compareSections(left, right, options.sort)
   ));
+}
+
+/**
+ * Splits conversations into project sections. Membership resolves only through a live project;
+ * an individually pinned conversation stays in `rest` so the Pinned section shows it on its own.
+ */
+export function groupConversationsByProject(
+  conversations: readonly ConversationMeta[],
+  projects: readonly ProjectRecord[],
+  sort: SessionManagerSort,
+): ProjectGrouping {
+  const sections = new Map<string, SessionListSection>();
+  for (const project of projects) {
+    sections.set(project.id, {
+      key: `project:${project.id}`,
+      kind: 'project',
+      label: project.name,
+      projectId: project.id,
+      conversations: [],
+    });
+  }
+
+  const rest: ConversationMeta[] = [];
+  const sortedConversations = [...conversations].sort((left, right) => (
+    compareConversations(left, right, sort)
+  ));
+  for (const conversation of sortedConversations) {
+    const section = conversation.projectId && !conversation.isPinned
+      ? sections.get(conversation.projectId)
+      : undefined;
+    if (section) {
+      section.conversations.push(conversation);
+    } else {
+      rest.push(conversation);
+    }
+  }
+
+  const createdAtById = new Map(projects.map(project => [project.id, project.createdAt]));
+  const getProjectTimestamp = (section: SessionListSection) => (
+    section.conversations.length > 0
+      ? getSectionTimestamp(section, sort)
+      : createdAtById.get(section.projectId ?? '') ?? 0
+  );
+  const sortedSections = [...sections.values()].sort((left, right) => (
+    getProjectTimestamp(right) - getProjectTimestamp(left)
+    || (left.label ?? '').localeCompare(right.label ?? '', undefined, {
+      sensitivity: 'base',
+      numeric: true,
+    })
+  ));
+  const pinnedIds = new Set(projects.filter(project => project.isPinned).map(project => project.id));
+  return {
+    pinnedProjects: sortedSections.filter(section => pinnedIds.has(section.projectId ?? '')),
+    projects: sortedSections.filter(section => !pinnedIds.has(section.projectId ?? '')),
+    rest,
+  };
 }

@@ -25,6 +25,7 @@ import type {
 } from './app/collab/git/GitRuntimeResolver';
 import { CollabComposerReferenceService } from './app/CollabComposerReferenceService';
 import { ConversationRepository } from './app/conversations/ConversationRepository';
+import { ProjectStore } from './app/projects/ProjectStore';
 import { ClaudianProviderHost } from './app/providers/ClaudianProviderHost';
 import { ChatModelSelectionCoordinator } from './app/settings/ChatModelSelectionCoordinator';
 import { DEFAULT_CLAUDIAN_SETTINGS } from './app/settings/defaultSettings';
@@ -74,6 +75,7 @@ import type {
   Conversation,
   ConversationMeta,
   ConversationMutablePatch,
+  ProjectRecord,
   SessionMetadata,
 } from './core/types';
 import {
@@ -219,6 +221,7 @@ export default class ClaudianPlugin extends Plugin {
   private chatModelSelectionCoordinator!: ChatModelSelectionCoordinator;
   private pinnedLinkedContentPaths!: PinnedLinkedContentPathCoordinator;
   private conversationRepository!: ConversationRepository;
+  private projectStore!: ProjectStore;
   private pendingSessionMetadataScan = false;
   private pendingEnvironmentInvalidationGenerations = new Map<ProviderId, number>();
   private blockedEnvironmentInvalidationGenerations = new Map<ProviderId, number>();
@@ -1264,6 +1267,11 @@ export default class ClaudianPlugin extends Plugin {
       persistence: sharedStorage.conversationPersistence,
       onConversationDeleted: (conversationId) => this.resetDeletedConversationTabs(conversationId),
     });
+    this.projectStore = new ProjectStore({
+      settingsCoordinator: this.settingsCoordinator,
+      getSettings: () => this.settings,
+      repository: this.conversationRepository,
+    });
 
     // Plan mode is ephemeral — normalize back to normal on load so the app
     // doesn't start stuck in plan mode after a restart (prePlanPermissionMode is lost)
@@ -1832,6 +1840,7 @@ export default class ClaudianPlugin extends Plugin {
       messages: [],
       linkedContentPath: meta.linkedContentPath,
       isPinned: meta.isPinned,
+      projectId: meta.projectId,
       isArchived: meta.isArchived,
       externalContextPaths: meta.externalContextPaths,
       usage: meta.usage,
@@ -2241,6 +2250,7 @@ export default class ClaudianPlugin extends Plugin {
     sessionId?: string;
     selectedModel?: string;
     linkedContentPath?: string;
+    projectId?: string;
   }): Promise<Conversation> {
     const conversation = await this.conversationRepository.create(options);
     this.notifyConversationViewsChanged();
@@ -2319,6 +2329,33 @@ export default class ClaudianPlugin extends Plugin {
     if (changed) {
       this.notifyConversationViewsChanged();
     }
+  }
+
+  getProjects(): readonly ProjectRecord[] {
+    return this.projectStore.list();
+  }
+
+  async createProject(name: string): Promise<ProjectRecord | null> {
+    const project = await this.projectStore.create(name);
+    if (project) this.notifyConversationViewsChanged();
+    return project;
+  }
+
+  async renameProject(id: string, name: string): Promise<void> {
+    if (await this.projectStore.rename(id, name)) this.notifyConversationViewsChanged();
+  }
+
+  async setProjectPinned(id: string, isPinned: boolean): Promise<void> {
+    if (await this.projectStore.setPinned(id, isPinned)) this.notifyConversationViewsChanged();
+  }
+
+  async deleteProject(id: string): Promise<void> {
+    if (await this.projectStore.delete(id)) this.notifyConversationViewsChanged();
+  }
+
+  async setConversationProject(id: string, projectId: string | null): Promise<void> {
+    await this.conversationRepository.setProject(id, projectId);
+    this.notifyConversationViewsChanged();
   }
 
   async setConversationArchived(id: string, isArchived: boolean): Promise<void> {

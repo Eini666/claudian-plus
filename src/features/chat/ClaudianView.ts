@@ -18,6 +18,8 @@ import { ProviderRegistry } from '../../core/providers/ProviderRegistry';
 import { type AppTabManagerState, DEFAULT_CHAT_PROVIDER_ID, type ProviderId } from '../../core/providers/types';
 import { type ConversationMeta, VIEW_TYPE_CLAUDIAN } from '../../core/types';
 import { t } from '../../i18n/i18n';
+import { confirm } from '../../shared/modals/ConfirmModal';
+import { pickProject, promptProjectName } from '../../shared/modals/ProjectPickerModal';
 import {
   cancelScheduledAnimationFrame,
   scheduleAnimationFrame,
@@ -35,6 +37,7 @@ import { ConversationFindBar } from './controllers/ConversationFindBar';
 import { folderMostu, odbierzWiadomosc } from './services/ariTelefon';
 import { MentionCacheCoordinator } from './services/MentionCacheCoordinator';
 import { TabStatePersistenceCoordinator } from './services/TabStatePersistenceCoordinator';
+import { ProjectActions } from './session-manager/ProjectActions';
 import { getObsidianLanguage } from './session-manager/ProvisionalNoteNames';
 import { renderSessionGroupToggleIcon } from './session-manager/SessionManagerIcons';
 import { getTabProviderId } from './tabs/providerResolution';
@@ -127,6 +130,7 @@ export class ClaudianView extends ItemView {
   private sessionSearchRestoreState: SessionSearchScrollState | null = null;
   private searchCollapsedSessionGroupKeys?: Set<string> = new Set<string>();
   private collapsedSessionGroupKeys?: Set<string> = new Set<string>();
+  private projectActions?: ProjectActions;
   private sessionGroupKeys?: Set<string> = new Set<string>();
 
   // Event refs for cleanup
@@ -796,14 +800,17 @@ export class ClaudianView extends ItemView {
   }
 
   private async activateOrCreateDraftTab(): Promise<void> {
+    // A reused draft drops its project: only the project row's + starts a project session (R9).
     const activeTab = this.tabManager?.getActiveTab();
     if (activeTab?.conversationId === null) {
+      activeTab.state.draftProjectId = null;
       activeTab.dom.inputEl.focus();
       return;
     }
 
     const draftTab = this.findMostRecentUnboundTab();
     if (draftTab) {
+      draftTab.state.draftProjectId = null;
       await this.tabManager?.switchToTab(draftTab.id);
       draftTab.dom.inputEl.focus();
       return;
@@ -1323,6 +1330,12 @@ export class ClaudianView extends ItemView {
             onStartLinkedContentConversation: (contentPath: string) => (
               this.startLinkedContentConversation(contentPath)
             ),
+            ...(!isArchiveView
+              ? {
+                  projects: this.plugin.getProjects(),
+                  projectActions: this.getProjectActions(),
+                }
+              : {}),
             getProviderIcon: (conversation: ConversationMeta) => {
               try {
                 return ProviderRegistry
@@ -1753,6 +1766,42 @@ export class ClaudianView extends ItemView {
       await this.tabManager.closeTab(tab.id).catch(() => false);
       throw error;
     }
+  }
+
+  private getProjectActions(): ProjectActions {
+    return this.projectActions ??= new ProjectActions({
+      host: this.plugin,
+      isConversationRunning: id => this.getHistoryConversationStatus(id).isRunning,
+      archiveConversations: ids => this.archiveConversations(ids),
+      openDraft: () => this.openProjectDraftTab(),
+      promptName: initialName => promptProjectName(this.app, initialName),
+      pickProject: projects => pickProject(this.app, projects),
+      confirm: message => confirm(this.app, message, t('common.delete')),
+      notify: (message) => {
+        new Notice(message);
+      },
+    });
+  }
+
+  /** Same flow as startLinkedContentConversation: a provisional draft tab, focused when active. */
+  private async openProjectDraftTab(): Promise<AssembledTabRuntime | null> {
+    if (!this.tabManager) {
+      throw new Error('Chat tabs are unavailable');
+    }
+    if (this.isArchiveSessionView) {
+      this.setArchiveSessionView(false);
+    }
+    await this.tabManager.waitForTabSwitchIdle();
+    const tab = await this.tabManager.createTab(null, undefined, {
+      activate: true,
+      lifecycleState: 'provisional',
+    });
+    if (!tab) return null;
+    this.updateTabBarVisibility();
+    if (this.tabManager.getActiveTabId() === tab.id) {
+      tab.dom.inputEl.focus();
+    }
+    return tab;
   }
 
   private handleWorkspaceFileOpen(file: TFile | null): void {

@@ -9,6 +9,7 @@ import type {
   Conversation,
   ConversationMeta,
   ConversationMutablePatch,
+  ProjectRecord,
   StoredChatModelSelection,
 } from '../core/types';
 import type { AccountsPanelHost } from './accounts/AccountsPanelHost';
@@ -109,6 +110,7 @@ export interface FeatureHost {
     sessionId?: string;
     selectedModel?: string;
     linkedContentPath?: string;
+    projectId?: string;
   }): Promise<Conversation>;
   switchConversation(id: string): Promise<Conversation | null>;
   assignConversationToCurrentDevice(id: string): Promise<boolean>;
@@ -120,6 +122,12 @@ export interface FeatureHost {
   renameConversation(id: string, title: string): Promise<void>;
   setConversationPinned(id: string, isPinned: boolean): Promise<void>;
   setLinkedContentPinned(contentPath: string, isPinned: boolean): Promise<void>;
+  getProjects(): readonly ProjectRecord[];
+  createProject(name: string): Promise<ProjectRecord | null>;
+  renameProject(id: string, name: string): Promise<void>;
+  setProjectPinned(id: string, isPinned: boolean): Promise<void>;
+  deleteProject(id: string): Promise<void>;
+  setConversationProject(id: string, projectId: string | null): Promise<void>;
   rewriteLinkedContentPaths(
     oldPath: string,
     newPath: string,

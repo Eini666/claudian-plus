@@ -2017,6 +2017,28 @@ describe('InputController coordinator execution', () => {
     }));
   });
 
+  it('creates the first-turn conversation inside the draft project and clears the draft project', async () => {
+    const token = Object.freeze({ path: null });
+    const fixture = createFixture({
+      getLinkedContentController: () => ({
+        beginSubmission: jest.fn().mockReturnValue(token),
+        commitSubmission: jest.fn().mockReturnValue({ linkedContentPath: null, queuedEvents: [] }),
+        getSnapshot: jest.fn().mockReturnValue({ mode: 'none', path: null }),
+        rollbackSubmission: jest.fn(),
+      }),
+    });
+    fixture.state.currentConversationId = null;
+    fixture.state.draftProjectId = 'project-1';
+    fixture.plugin.createConversation.mockResolvedValue({ id: 'project-conversation' });
+
+    await fixture.controller.sendMessage({ content: 'Start project session' });
+
+    expect(fixture.plugin.createConversation).toHaveBeenCalledWith(expect.objectContaining({
+      projectId: 'project-1',
+    }));
+    expect(fixture.state.draftProjectId).toBeNull();
+  });
+
   it('restores the reconciled Linked content draft when Conversation creation fails', async () => {
     const token = Object.freeze({ path: 'Projects/Plan.md' });
     const linkedContentController = {

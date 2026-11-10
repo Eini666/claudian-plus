@@ -386,6 +386,12 @@
   background: var(--background-modifier-hover);
 }
 
+.claudian-session-group-header.is-drop-target,
+.claudian-session-sidebar .claudian-session-section-header.is-drop-target {
+  background: var(--background-modifier-hover);
+  box-shadow: inset 0 0 0 1px var(--interactive-accent);
+}
+
 .claudian-session-group-icon {
   display: flex;
   flex: 0 0 14px;
@@ -524,6 +530,38 @@
 
 .claudian-session-group-body--collapsed {
   display: none;
+}
+
+/* Projekty: sekcja miedzy Przypietymi a Sesjami, wiersze jak naglowki grup notatek. */
+.claudian-session-sidebar .claudian-history-section--projects {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  max-height: 40%;
+  min-height: 0;
+}
+
+.claudian-session-sidebar .claudian-history-section--projects
+  .claudian-history-section-items {
+  min-height: 0;
+  overflow-y: auto;
+  overflow-anchor: none;
+}
+
+.claudian-session-group-count {
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 400;
+}
+
+.claudian-session-group-empty {
+  padding: 4px 12px 4px 32px;
+  color: var(--text-faint);
+  font-size: 12px;
+}
+
+.claudian-project-name-input {
+  width: 100%;
 }
 
 .claudian-session-group-header--missing .claudian-session-group-icon,

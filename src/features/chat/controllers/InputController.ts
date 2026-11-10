@@ -1802,8 +1802,10 @@ export class InputController {
       providerId: this.getActiveProviderId(),
       ...(selectedModel ? { selectedModel } : {}),
       ...(token.path ? { linkedContentPath: token.path } : {}),
+      ...(state.draftProjectId ? { projectId: state.draftProjectId } : {}),
     });
     state.currentConversationId = conversation.id;
+    state.draftProjectId = null;
 
     const settlement = this.deps.getLinkedContentController().commitSubmission(token);
     for (const event of settlement.queuedEvents) {

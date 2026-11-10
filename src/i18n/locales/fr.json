@@ -149,6 +149,24 @@
         "plan": "Plan",
         "planDesc": "Plans only, changes nothing (Shift+Tab returns)"
       }
+    },
+    "projects": {
+      "section": "Projects",
+      "new": "New project",
+      "newNamePrompt": "Project name",
+      "newSession": "New session in project",
+      "empty": "No sessions",
+      "pin": "Pin project",
+      "unpin": "Unpin project",
+      "rename": "Rename",
+      "archiveAll": "Archive all sessions",
+      "archived": "Archived: {count}, skipped running: {skipped}",
+      "delete": "Delete project",
+      "deleteConfirm": "Delete project \"{name}\"? Its sessions stay and move back to Sessions.",
+      "moveTo": "Move to project…",
+      "removeFrom": "Remove from project",
+      "pickPlaceholder": "Choose a project",
+      "pickNew": "New project…"
     }
   },
   "collab": {

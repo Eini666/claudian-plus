@@ -78,6 +78,7 @@ export const DEFAULT_CLAUDIAN_SETTINGS: ClaudianSettings = {
   sessionManagerOrganization: 'list',
   sessionManagerSort: 'last-updated',
   pinnedLinkedContentPaths: [],
+  projects: [],
 
   hiddenProviderCommands: getDefaultHiddenProviderCommands(),
 };

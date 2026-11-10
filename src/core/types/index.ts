@@ -21,6 +21,7 @@ export {
   isCanonicalUserMessage,
   type PlanRateLimits,
   type PlanRateLimitWindow,
+  type ProjectRecord,
   type SessionMetadata,
   type StreamChunk,
   type UsageInfo,

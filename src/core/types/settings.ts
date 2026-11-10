@@ -1,5 +1,5 @@
 import type { TurnStamps } from '../../utils/CacheWarmth';
-import type { PlanRateLimits } from './chat';
+import type { PlanRateLimits, ProjectRecord } from './chat';
 
 export type HiddenProviderCommands = Record<string, string[]>;
 
@@ -237,6 +237,7 @@ export interface ClaudianSettings {
   sessionManagerOrganization?: SessionManagerOrganization;
   sessionManagerSort?: SessionManagerSort;
   pinnedLinkedContentPaths?: string[];
+  projects?: ProjectRecord[];
 
   // Provider command visibility
   hiddenProviderCommands: HiddenProviderCommands;

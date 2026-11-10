@@ -399,6 +399,7 @@ export class ConversationRepository {
     sessionId?: string;
     selectedModel?: string;
     linkedContentPath?: string;
+    projectId?: string;
   }): Promise<Conversation> {
     const settings = this.deps.getSettings();
     const providerId = options?.providerId ?? DEFAULT_CHAT_PROVIDER_ID;
@@ -432,6 +433,7 @@ export class ConversationRepository {
       linkedContentPath: options?.linkedContentPath === undefined
         ? undefined
         : assertLinkedContentPath(options.linkedContentPath),
+      ...(options?.projectId ? { projectId: options.projectId } : {}),
     };
 
     this.metadataTargets.set(conversation.id, 'device');
@@ -649,6 +651,15 @@ export class ConversationRepository {
     ) return;
 
     conversation.isPinned = isPinned;
+    await this.save(conversation);
+  }
+
+  async setProject(id: string, projectId: string | null): Promise<void> {
+    const conversation = this.getSync(id);
+    const nextProjectId = projectId ?? undefined;
+    if (!conversation || conversation.projectId === nextProjectId) return;
+
+    conversation.projectId = nextProjectId;
     await this.save(conversation);
   }
 
@@ -1141,6 +1152,7 @@ export class ConversationRepository {
       preview: this.getPreview(conversation),
       linkedContentPath: conversation.linkedContentPath,
       isPinned: conversation.isPinned,
+      projectId: conversation.projectId,
       isArchived: conversation.isArchived,
       titleGenerationStatus: conversation.titleGenerationStatus,
       isLegacySession: this.isLegacyMetadataTarget(id),
@@ -1235,6 +1247,7 @@ export class ConversationRepository {
       preview: this.getPreview(conversation),
       linkedContentPath: conversation.linkedContentPath,
       isPinned: conversation.isPinned,
+      projectId: conversation.projectId,
       isArchived: conversation.isArchived,
       titleGenerationStatus: conversation.titleGenerationStatus,
       isLegacySession: this.isLegacyMetadataTarget(conversation.id),
@@ -1986,6 +1999,7 @@ export class ConversationRepository {
         : {}),
       linkedContentPath,
       isPinned: conversation.isPinned,
+      projectId: conversation.projectId,
       isArchived: conversation.isArchived,
       externalContextPaths: conversation.externalContextPaths,
       usage: conversation.usage,

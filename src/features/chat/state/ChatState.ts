@@ -63,6 +63,8 @@ export class ChatState {
   } | null = null;
   private thinkingIndicatorTimeoutWindow: Window | null = null;
   private flavorTimerIntervalWindow: Window | null = null;
+  /** Project for the draft's first send; only the project row's + sets it (R9). */
+  draftProjectId: string | null = null;
 
   constructor(callbacks: ChatStateCallbacks = {}) {
     this.state = createInitialState();

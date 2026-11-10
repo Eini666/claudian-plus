@@ -10,6 +10,7 @@ import type {
   Conversation,
   ConversationMeta,
   ConversationMutablePatch,
+  ProjectRecord,
   ProviderId,
   SessionManagerOrganization,
   SessionManagerSort,
@@ -29,7 +30,15 @@ import { createWelcomeElement, renderWelcomeContent } from '../rendering/Welcome
 import { findRewindContext } from '../rewind';
 import type { SubagentManager } from '../services/SubagentManager';
 import {
+  type ProjectListActions,
+  type ProjectSectionContext,
+  renderProjectGroup,
+  renderProjectsSection,
+} from '../session-manager/ProjectSections';
+import { makeConversationDraggable, makeDropTarget } from '../session-manager/SessionDragDrop';
+import {
   getLinkedContentTitle,
+  groupConversationsByProject,
   isLegacyProvisionalLinkedContent,
   organizeSessionList,
   type SessionListSection,
@@ -140,6 +149,9 @@ type HistoryRenderOptions = {
   onSetLinkedContentPinned?: (contentPath: string, isPinned: boolean) => Promise<void>;
   onStartLinkedContentConversation?: (contentPath: string) => Promise<void>;
   pinnedLinkedContentPaths?: ReadonlySet<string>;
+  /** Projects and their actions; given only for the active Sessions surface. */
+  projects?: readonly ProjectRecord[];
+  projectActions?: ProjectListActions;
   preserveListState?: boolean;
   showAttentionState?: boolean;
   showPinnedSection?: boolean;
@@ -249,6 +261,7 @@ export class ConversationController {
 
       // Reset to entry point state - no conversation created yet
       state.currentConversationId = null;
+      state.draftProjectId = null;
       state.clearMessages();
       state.usage = null;
       state.currentTodos = null;
@@ -815,6 +828,19 @@ export class ConversationController {
             .toLocaleLowerCase();
           return searchTerms.every(term => searchableText.includes(term));
         });
+    // Project membership wins over Linked content grouping; search shows the flat result list.
+    const projectActions = options.projectActions;
+    const projectGrouping = projectActions
+      && options.projects
+      && options.showPinnedSection
+      && options.sessionScope !== 'archived'
+      && searchTerms.length === 0
+      ? groupConversationsByProject(filteredConversations, options.projects, options.sort ?? 'last-updated')
+      : null;
+    const listedConversations = projectGrouping?.rest ?? filteredConversations;
+    const findConversation = (id: string): ConversationMeta | undefined => (
+      allConversations.find(conversation => conversation.id === id)
+    );
     const conversationsByLinkedContent = new Map<string, ConversationMeta[]>();
     for (const conversation of scopedConversations) {
       if (!conversation.linkedContentPath) continue;
@@ -831,17 +857,17 @@ export class ConversationController {
       !!conversation.linkedContentPath
       && pinnedLinkedContentPaths.has(conversation.linkedContentPath)
     );
-    const pinnedContentConversations = filteredConversations.filter(isInPinnedContentGroup);
+    const pinnedContentConversations = listedConversations.filter(isInPinnedContentGroup);
     const pinnedConversations = options.showPinnedSection
-      ? filteredConversations.filter(conversation => (
+      ? listedConversations.filter(conversation => (
           conversation.isPinned && !isInPinnedContentGroup(conversation)
         ))
       : [];
     const sessionConversations = options.showPinnedSection
-      ? filteredConversations.filter(conversation => (
+      ? listedConversations.filter(conversation => (
           !conversation.isPinned && !isInPinnedContentGroup(conversation)
         ))
-      : filteredConversations;
+      : listedConversations;
     const pinnedPathsWithMatchingSessions = new Set(
       pinnedContentConversations.flatMap(conversation => (
         conversation.linkedContentPath ? [conversation.linkedContentPath] : []
@@ -867,7 +893,12 @@ export class ConversationController {
     let pinnedList: HTMLElement | null = null;
     if (showSessionSections) {
       list = container.createDiv({ cls: 'claudian-history-list' });
-      if (pinnedConversations.length > 0 || pinnedContentSections.length > 0) {
+      const pinnedProjects = projectGrouping?.pinnedProjects ?? [];
+      if (
+        pinnedConversations.length > 0
+        || pinnedContentSections.length > 0
+        || pinnedProjects.length > 0
+      ) {
         const pinnedSection = list.createDiv({
           cls: 'claudian-history-section claudian-history-section--pinned',
         });
@@ -878,9 +909,34 @@ export class ConversationController {
           cls: 'claudian-history-section-label',
           text: 'Pinned',
         });
+        const setPinned = options.onSetConversationPinned;
+        if (setPinned) {
+          makeDropTarget(
+            pinnedHeader,
+            id => runConversationAction(() => setPinned(id, true), 'Failed to pin session'),
+            id => findConversation(id)?.isPinned === true,
+          );
+        }
         pinnedList = pinnedSection.createDiv({
           cls: 'claudian-history-section-items',
         });
+      }
+
+      if (projectGrouping && projectActions) {
+        const projectContext: ProjectSectionContext = {
+          projectActions,
+          collapsedGroupKeys: options.collapsedGroupKeys,
+          onGroupCollapseChange: options.onGroupCollapseChange,
+          onRerender: options.onRerender,
+          projectIdOf: id => findConversation(id)?.projectId,
+          renderConversation: (parent, conversation) => (
+            this.renderHistoryConversationItem(parent, conversation, options)
+          ),
+        };
+        for (const section of pinnedProjects) {
+          if (pinnedList) renderProjectGroup(pinnedList, section, true, projectContext);
+        }
+        renderProjectsSection(list, projectGrouping.projects, projectContext);
       }
 
       const sessionsSection = list.createDiv({
@@ -902,6 +958,16 @@ export class ConversationController {
         cls: 'claudian-history-section-label',
         text: options.showArchivedSection ? 'Archived' : 'Sessions',
       });
+      if (projectActions && !options.showArchivedSection) {
+        makeDropTarget(
+          sessionsHeader,
+          id => runConversationAction(
+            () => projectActions.moveToProject(id, null),
+            'Failed to remove session from project',
+          ),
+          id => !findConversation(id)?.projectId,
+        );
+      }
       sessionList = sessionsSection.createDiv({
         cls: 'claudian-history-section-items claudian-session-list-items',
       });
@@ -919,7 +985,7 @@ export class ConversationController {
     );
     list.dataset.visibleCount = String(visibleCount);
 
-    if (filteredConversations.length === 0 && pinnedContentSections.length === 0) {
+    if (listedConversations.length === 0 && pinnedContentSections.length === 0) {
       if (organization === 'linked-content') {
         options.onGroupKeysChange?.([]);
       }
@@ -1351,6 +1417,9 @@ export class ConversationController {
     });
     item.setAttribute('data-open-state', openState);
     item.setAttribute('data-conversation-id', conversation.id);
+    if (options.sessionActionMode === 'active' && options.showPinnedSection) {
+      makeConversationDraggable(item, conversation.id);
+    }
     item.setAttribute('data-running', isRunning ? 'true' : 'false');
     item.setAttribute('data-tab-location', conversationStatus.location ?? 'current-view');
     if (typeof conversationStatus.tabIndex === 'number') {
@@ -2115,6 +2184,29 @@ export class ConversationController {
         .onClick(() => {
           this.showRenameEditor(item, conversationId, title, options);
         }));
+      const projectActions = options.projectActions;
+      if (projectActions) {
+        menu.addItem((menuItem) => menuItem
+          .setTitle(t('chat.projects.moveTo'))
+          .onClick(() => {
+            void this.runHistoryAction(
+              () => projectActions.chooseProjectFor(conversationId),
+              'Failed to move session to project',
+            );
+          }));
+        const hasLiveProject = !!conversation.projectId
+          && (options.projects ?? []).some(project => project.id === conversation.projectId);
+        if (hasLiveProject) {
+          menu.addItem((menuItem) => menuItem
+            .setTitle(t('chat.projects.removeFrom'))
+            .onClick(() => {
+              void this.runHistoryAction(
+                () => projectActions.moveToProject(conversationId, null),
+                'Failed to remove session from project',
+              );
+            }));
+        }
+      }
       menu.addItem((menuItem) => {
         menuItem
           .setTitle('Archive')
@@ -2200,6 +2292,7 @@ export class ConversationController {
     });
 
     titleEl.replaceWith(input);
+    item.draggable = false;
     input.focus();
     input.select();
 

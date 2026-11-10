@@ -1,5 +1,6 @@
-import type { ConversationMeta } from '@/core/types';
+import type { ConversationMeta, ProjectRecord } from '@/core/types';
 import {
+  groupConversationsByProject,
   isProvisionalNotePath,
   organizeSessionList,
 } from '@/features/chat/session-manager/SessionListOrganizer';
@@ -191,5 +192,85 @@ describe('SessionListOrganizer', () => {
       'newer-update',
       'older-update',
     ]);
+  });
+});
+
+describe('groupConversationsByProject', () => {
+  const alpha: ProjectRecord = { id: 'alpha', name: 'Alpha', createdAt: 5 };
+  const beta: ProjectRecord = { id: 'beta', name: 'Beta', createdAt: 6 };
+  const ids = (conversations: ConversationMeta[]) => conversations.map(item => item.id);
+
+  it('builds one section per project and leaves the rest ungrouped', () => {
+    const result = groupConversationsByProject([
+      createConversation('a1', { projectId: 'alpha', lastActivityAt: 10 }),
+      createConversation('b1', { projectId: 'beta', lastActivityAt: 20 }),
+      createConversation('a2', { projectId: 'alpha', lastActivityAt: 30 }),
+      createConversation('free', { lastActivityAt: 40 }),
+    ], [alpha, beta], 'last-updated');
+
+    expect(result.pinnedProjects).toEqual([]);
+    expect(result.projects).toEqual([
+      { key: 'project:alpha', kind: 'project', label: 'Alpha', projectId: 'alpha', conversations: expect.any(Array) },
+      { key: 'project:beta', kind: 'project', label: 'Beta', projectId: 'beta', conversations: expect.any(Array) },
+    ]);
+    expect(ids(result.projects[0].conversations)).toEqual(['a2', 'a1']);
+    expect(ids(result.projects[1].conversations)).toEqual(['b1']);
+    expect(ids(result.rest)).toEqual(['free']);
+  });
+
+  it('treats a conversation with a missing project as having no project', () => {
+    const result = groupConversationsByProject([
+      createConversation('orphan', { projectId: 'deleted' }),
+    ], [alpha], 'last-updated');
+
+    expect(ids(result.rest)).toEqual(['orphan']);
+    expect(result.projects).toHaveLength(1);
+    expect(result.projects[0].conversations).toEqual([]);
+  });
+
+  it('keeps an empty project as a section with no conversations', () => {
+    const result = groupConversationsByProject([], [alpha], 'last-updated');
+
+    expect(result.projects).toEqual([
+      { key: 'project:alpha', kind: 'project', label: 'Alpha', projectId: 'alpha', conversations: [] },
+    ]);
+    expect(result.rest).toEqual([]);
+  });
+
+  it('moves a pinned project to pinnedProjects only', () => {
+    const result = groupConversationsByProject([
+      createConversation('a1', { projectId: 'alpha' }),
+    ], [{ ...alpha, isPinned: true }, beta], 'last-updated');
+
+    expect(result.pinnedProjects.map(section => section.projectId)).toEqual(['alpha']);
+    expect(ids(result.pinnedProjects[0].conversations)).toEqual(['a1']);
+    expect(result.projects.map(section => section.projectId)).toEqual(['beta']);
+  });
+
+  it('leaves an individually pinned conversation out of its project section', () => {
+    const result = groupConversationsByProject([
+      createConversation('pinned', { projectId: 'alpha', isPinned: true }),
+      createConversation('member', { projectId: 'alpha' }),
+    ], [alpha], 'last-updated');
+
+    expect(ids(result.projects[0].conversations)).toEqual(['member']);
+    expect(ids(result.rest)).toEqual(['pinned']);
+  });
+
+  it('orders conversations and projects by the selected sort', () => {
+    const conversations = [
+      createConversation('a-old-active', { projectId: 'alpha', createdAt: 1, lastActivityAt: 100 }),
+      createConversation('a-new-idle', { projectId: 'alpha', createdAt: 50, lastActivityAt: 60 }),
+      createConversation('b-mid', { projectId: 'beta', createdAt: 70, lastActivityAt: 70 }),
+    ];
+    const empty: ProjectRecord = { id: 'empty', name: 'Empty', createdAt: 80 };
+
+    const byActivity = groupConversationsByProject(conversations, [alpha, beta, empty], 'last-updated');
+    expect(byActivity.projects.map(section => section.projectId)).toEqual(['alpha', 'empty', 'beta']);
+    expect(ids(byActivity.projects[0].conversations)).toEqual(['a-old-active', 'a-new-idle']);
+
+    const byCreated = groupConversationsByProject(conversations, [alpha, beta, empty], 'created');
+    expect(byCreated.projects.map(section => section.projectId)).toEqual(['empty', 'beta', 'alpha']);
+    expect(ids(byCreated.projects[2].conversations)).toEqual(['a-new-idle', 'a-old-active']);
   });
 });

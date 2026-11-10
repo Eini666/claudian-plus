@@ -232,6 +232,13 @@ export class Modal {
   onClose = jest.fn();
 }
 
+export class SuggestModal<T> extends Modal {
+  setPlaceholder = jest.fn();
+  getSuggestions(_query: string): T[] {
+    return [];
+  }
+}
+
 class MockMenuItem {
   title = '';
   icon = '';

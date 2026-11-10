@@ -149,6 +149,24 @@
         "plan": "Plan",
         "planDesc": "Tylko planuje, niczego nie zmienia (Shift+Tab wraca)"
       }
+    },
+    "projects": {
+      "section": "Projekty",
+      "new": "Nowy projekt",
+      "newNamePrompt": "Nazwa projektu",
+      "newSession": "Nowa rozmowa w projekcie",
+      "empty": "Brak rozmów",
+      "pin": "Przypnij projekt",
+      "unpin": "Odepnij projekt",
+      "rename": "Zmień nazwę",
+      "archiveAll": "Zarchiwizuj wszystkie rozmowy",
+      "archived": "Zarchiwizowano: {count}, pominięto pracujące: {skipped}",
+      "delete": "Usuń projekt",
+      "deleteConfirm": "Usunąć projekt „{name}”? Rozmowy zostaną i wrócą do listy Sesje.",
+      "moveTo": "Przenieś do projektu…",
+      "removeFrom": "Usuń z projektu",
+      "pickPlaceholder": "Wybierz projekt",
+      "pickNew": "Nowy projekt…"
     }
   },
   "settings": {

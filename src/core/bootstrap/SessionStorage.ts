@@ -408,6 +408,7 @@ export class SessionStorage implements SessionMetadataReader {
       preview: 'SDK session',
       linkedContentPath: meta.linkedContentPath,
       isPinned: meta.isPinned,
+      projectId: meta.projectId,
       isArchived: meta.isArchived,
       titleGenerationStatus: meta.titleGenerationStatus,
     }));

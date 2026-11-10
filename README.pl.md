@@ -21,6 +21,8 @@ która przydaje się przy codziennej pracy z Claude Code po polsku. Opis orygina
 - **Kafelki i wykresy `plus-ui`** — bloki kodu, które agent może wyrenderować jako elementy interfejsu.
 - **Strony lokalne we wbudowanej przeglądarce** z przeładowaniem po zmianie pliku.
 - **Archiwizacja rozmów.**
+- **Projekty** — grupowanie rozmów w projekty na szerokiej liście sesji: + przy projekcie zaczyna w nim
+  rozmowę, a rozmowy można przeciągać między projektami, „Sesjami” i „Przypiętymi”.
 - **Awatar stanu** — widać, czy agent pracuje, czeka na odpowiedź, czy skończył; opcjonalnie
   okienko na pulpicie i sygnał na pasku zadań Windows, gdy Obsidian jest w tle.
 - **Telegram i głosówki** — piszesz (albo mówisz) do agenta z telefonu, a poza domem dostajesz od niego

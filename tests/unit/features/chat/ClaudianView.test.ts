@@ -841,7 +841,7 @@ describe('ClaudianView tab controls', () => {
   it('focuses the current unbound draft when New is clicked again in dual mode', async () => {
     const inputEl = createMockEl('textarea') as unknown as HTMLTextAreaElement;
     inputEl.focus = jest.fn();
-    const draftTab = { id: 'draft-1', conversationId: null, dom: { inputEl } };
+    const draftTab = { id: 'draft-1', conversationId: null, dom: { inputEl }, state: { draftProjectId: null } };
     const view = Object.create(ClaudianView.prototype) as any;
 
     view.createNewTab = jest.fn();
@@ -858,6 +858,22 @@ describe('ClaudianView tab controls', () => {
     expect(view.createNewTab).not.toHaveBeenCalled();
   });
 
+  it('drops the draft project when New reuses a draft started from a project (R9)', async () => {
+    const inputEl = createMockEl('textarea') as unknown as HTMLTextAreaElement;
+    inputEl.focus = jest.fn();
+    const draftTab = { id: 'draft-1', conversationId: null, dom: { inputEl }, state: { draftProjectId: 'p1' } };
+    const view = Object.create(ClaudianView.prototype) as any;
+    view.createNewTab = jest.fn();
+    view.tabManager = {
+      getActiveTab: jest.fn().mockReturnValue(draftTab),
+      getAllTabs: jest.fn().mockReturnValue([draftTab]),
+    };
+
+    await view.activateOrCreateDraftTab();
+
+    expect(draftTab.state.draftProjectId).toBeNull();
+  });
+
   it('resumes the most recent unbound draft instead of creating another one', async () => {
     const firstInputEl = createMockEl('textarea') as unknown as HTMLTextAreaElement;
     const latestInputEl = createMockEl('textarea') as unknown as HTMLTextAreaElement;
@@ -865,7 +881,12 @@ describe('ClaudianView tab controls', () => {
     latestInputEl.focus = jest.fn();
     const activeTab = { id: 'tab-1', conversationId: 'conversation-1' };
     const firstDraft = { id: 'draft-1', conversationId: null, dom: { inputEl: firstInputEl } };
-    const latestDraft = { id: 'draft-2', conversationId: null, dom: { inputEl: latestInputEl } };
+    const latestDraft = {
+      id: 'draft-2',
+      conversationId: null,
+      dom: { inputEl: latestInputEl },
+      state: { draftProjectId: null },
+    };
     const view = Object.create(ClaudianView.prototype) as any;
 
     view.createNewTab = jest.fn();
@@ -2096,6 +2117,7 @@ describe('ClaudianView tab controls', () => {
       plugin: {
         app: { vault: {} },
         settings: {},
+        getProjects: jest.fn().mockReturnValue([]),
       },
       tabManager: {
         getActiveTab: jest.fn().mockReturnValue({

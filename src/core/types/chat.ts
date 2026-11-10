@@ -151,6 +151,8 @@ export interface Conversation {
   readonly linkedContentPath?: string;
   /** Whether the session is pinned in the dual-pane session manager. */
   isPinned?: boolean;
+  /** Owning project id; a missing project means the session has no project. */
+  projectId?: string;
   /** Whether the session is archived and hidden from active session lists. */
   isArchived?: boolean;
   /** Session-specific external context paths (directories with full access). Resets on new session. */
@@ -175,6 +177,14 @@ export interface ConversationModelRecoverySource {
   resumeAtMessageId?: string;
 }
 
+/** Named group of sessions shown in the session manager. */
+export interface ProjectRecord {
+  id: string;
+  name: string;
+  createdAt: number;
+  isPinned?: boolean;
+}
+
 /** Lightweight conversation metadata for the history dropdown. */
 export interface ConversationMeta {
   id: string;
@@ -191,6 +201,8 @@ export interface ConversationMeta {
   linkedContentPath?: string;
   /** Whether the session is pinned in the dual-pane session manager. */
   isPinned?: boolean;
+  /** Owning project id; a missing project means the session has no project. */
+  projectId?: string;
   /** Whether the session is archived and hidden from active session lists. */
   isArchived?: boolean;
   /** Status of AI title generation. */
@@ -220,6 +232,7 @@ export interface SessionMetadata {
   modelRecoverySource?: ConversationModelRecoverySource;
   linkedContentPath?: string;
   isPinned?: boolean;
+  projectId?: string;
   isArchived?: boolean;
   externalContextPaths?: string[];
   usage?: UsageInfo;

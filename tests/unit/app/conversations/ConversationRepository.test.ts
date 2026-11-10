@@ -759,6 +759,54 @@ describe('ConversationRepository hydration', () => {
     expect(conversation).toMatchObject({ isArchived: false, isPinned: false });
   });
 
+  it('persists, projects and clears project membership without changing activity', async () => {
+    const conversation = createConversation();
+    conversation.lastActivityAt = 42;
+    const { repository, persistence } = createRepository(conversation);
+
+    await repository.setProject(conversation.id, 'p1');
+
+    expect(repository.getMetadata(conversation.id)?.projectId).toBe('p1');
+    expect(repository.list()[0].projectId).toBe('p1');
+    expect(conversation.lastActivityAt).toBe(42);
+    expect(persistence.saveMetadata).toHaveBeenCalledWith(expect.objectContaining({
+      id: conversation.id,
+      projectId: 'p1',
+    }));
+
+    persistence.saveMetadata.mockClear();
+    await repository.setProject(conversation.id, 'p1');
+    expect(persistence.saveMetadata).not.toHaveBeenCalled();
+
+    await repository.setProject(conversation.id, null);
+    expect(repository.getMetadata(conversation.id)?.projectId).toBeUndefined();
+    expect(persistence.saveMetadata).toHaveBeenCalledTimes(1);
+    expect(persistence.saveMetadata.mock.calls[0][0].projectId).toBeUndefined();
+
+    persistence.saveMetadata.mockClear();
+    await repository.setProject(conversation.id, null);
+    await repository.setProject('missing', 'p1');
+    expect(persistence.saveMetadata).not.toHaveBeenCalled();
+  });
+
+  it('keeps project membership when archiving and restoring', async () => {
+    const conversation = { ...createConversation(), projectId: 'p1' };
+    const { repository, persistence } = createRepository(conversation);
+
+    await repository.setArchived(conversation.id, true);
+    expect(repository.getMetadata(conversation.id)).toMatchObject({
+      isArchived: true,
+      projectId: 'p1',
+    });
+    expect(persistence.saveMetadata).toHaveBeenLastCalledWith(expect.objectContaining({
+      isArchived: true,
+      projectId: 'p1',
+    }));
+
+    await repository.setArchived(conversation.id, false);
+    expect(repository.getMetadata(conversation.id)?.projectId).toBe('p1');
+  });
+
   it('rewrites exact and descendant Linked content paths without changing activity', async () => {
     const fileConversation: Conversation = {
       ...createConversation('file'),
