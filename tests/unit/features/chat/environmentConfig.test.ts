@@ -85,6 +85,40 @@ describe('environmentConfig', () => {
     expect(saved.model).toBe('opus');
   });
 
+  it('uszkodzony settings.json: zapis przerwany, plik nietknięty', async () => {
+    const file = path.join(configDir, 'settings.json');
+    const broken = '{"hooks": {"Stop": [], ';
+    await fs.writeFile(file, broken);
+
+    await expect(setPluginEnabled(configDir, 'caveman@local', false)).rejects.toThrow();
+    expect(await fs.readFile(file, 'utf-8')).toBe(broken);
+  });
+
+  it('uszkodzony .claude.json: przełącznik MCP niczego nie zapisuje', async () => {
+    const file = path.join(home, '.claude.json');
+    await fs.writeFile(file, 'nie-json');
+    const pencil = state.mcpServers.find(s => s.id === 'pencil')!;
+
+    await expect(setMcpServerEnabled(state, pencil, false)).rejects.toThrow();
+    expect(await fs.readFile(file, 'utf-8')).toBe('nie-json');
+  });
+
+  it('brak settings.json: zapis tworzy plik', async () => {
+    await fs.rm(path.join(configDir, 'settings.json'));
+    await setPluginEnabled(configDir, 'caveman@local', false);
+
+    const saved = await readJson(path.join(configDir, 'settings.json'));
+    expect(saved.enabledPlugins).toEqual({ 'caveman@local': false });
+  });
+
+  it('przed pierwszym zapisem zostaje kopia .bak', async () => {
+    const file = path.join(configDir, 'settings.json');
+    const before = await fs.readFile(file, 'utf-8');
+    await setPluginEnabled(configDir, 'caveman@local', false);
+
+    expect(await fs.readFile(`${file}.claudian-bak`, 'utf-8')).toBe(before);
+  });
+
   it('wyłączony serwer użytkownika ląduje na parkingu z całą definicją i wraca', async () => {
     const pencil = state.mcpServers.find(s => s.id === 'pencil')!;
     await setMcpServerEnabled(state, pencil, false);

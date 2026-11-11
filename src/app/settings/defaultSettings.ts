@@ -1,4 +1,4 @@
-import { DEFAULT_COLLAB_PROJECTS_FOLDER } from '../../core/collab/CollabProjectsFolder';
+
 import { getDefaultHiddenProviderCommands } from '../../core/providers/commands/hiddenCommands';
 import { DEFAULT_REASONING_VALUE } from '../../core/providers/reasoning';
 import { type ClaudianSettings, DEFAULT_ASSISTANT_NAME } from '../../core/types/settings';
@@ -72,9 +72,6 @@ export const DEFAULT_CLAUDIAN_SETTINGS: ClaudianSettings = {
   enableDualPane: true,
   dualPaneSide: 'right',
   restoreTabsOnStartup: true,
-  collabEnabled: false,
-  collabProjectsFolder: DEFAULT_COLLAB_PROJECTS_FOLDER,
-  collabGitPath: '',
   sessionManagerOrganization: 'list',
   sessionManagerSort: 'last-updated',
   pinnedLinkedContentPaths: [],

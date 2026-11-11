@@ -6,10 +6,14 @@ import * as path from 'path';
 import {
   fileForPagePath,
   fileUrlToPath,
+  findPageRoot,
+  isServable,
   localPageUrl,
   pagePathFor,
   stopLocalPageServer,
 } from '@/utils/localPageServer';
+
+const CFG = 'cfg-vaulta';
 
 const get = (url: string) => new Promise<{ status: number; type: string; body: string }>((resolve, reject) => {
   http.get(url, (res) => {
@@ -51,7 +55,7 @@ describe('serwer', () => {
     const file = path.join(dir, 'strona testowa.html');
     fs.writeFileSync(file, '<h1>ok</h1>');
     try {
-      const url = await localPageUrl(file);
+      const url = await localPageUrl(file, CFG);
       expect(url).toMatch(/^http:\/\/127\.0\.0\.1:\d+\/[0-9a-f]{24}\/[A-Z]:\//);
       const ok = await get(url);
       expect(ok.status).toBe(200);
@@ -64,5 +68,60 @@ describe('serwer', () => {
     } finally {
       fs.rmSync(dir, { recursive: true, force: true });
     }
+  });
+
+  it('klucz strony otwiera tylko jej projekt: ../ w projekcie tak, plik obok projektu i sekrety nie', async () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'lps-'));
+    const proj = path.join(dir, 'proj');
+    fs.mkdirSync(path.join(proj, 'docs'), { recursive: true });
+    fs.mkdirSync(path.join(proj, 'font'));
+    fs.mkdirSync(path.join(proj, '.ssh'));
+    fs.writeFileSync(path.join(proj, 'package.json'), '{}');
+    fs.writeFileSync(path.join(proj, 'docs', 'makieta.html'), '<h1>m</h1>');
+    fs.writeFileSync(path.join(proj, 'font', 'x.ttf'), 'ttf');
+    fs.writeFileSync(path.join(proj, '.env'), 'SEKRET=1');
+    fs.writeFileSync(path.join(proj, '.ssh', 'id_rsa'), 'klucz');
+    fs.writeFileSync(path.join(dir, 'obok.txt'), 'poza projektem');
+    try {
+      const url = await localPageUrl(path.join(proj, 'docs', 'makieta.html'), CFG);
+      const u = new URL(url);
+      const base = `${u.origin}/${u.pathname.split('/')[1]}`;
+      const at = (p: string) => `${base}/${p.replace(/\\/g, '/')}`;
+
+      expect((await get(url)).status).toBe(200);
+      expect((await get(at(path.join(proj, 'font', 'x.ttf')))).status).toBe(200);
+      expect((await get(at(path.join(dir, 'obok.txt')))).status).toBe(404);
+      expect((await get(at(path.join(proj, '.env')))).status).toBe(404);
+      expect((await get(at(path.join(proj, '.ssh', 'id_rsa')))).status).toBe(404);
+      expect((await get(url)).type).toContain('text/html');
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  });
+});
+
+describe('korzen strony', () => {
+  const exists = (set: string[]) => (p: string) => set.includes(p);
+
+  it('najblizszy folder z .git / package.json / konfiguracja vaulta', () => {
+    expect(findPageRoot('C:\\proj\\docs\\mock', CFG, exists(['C:\\proj\\.git']))).toBe('C:\\proj');
+    expect(findPageRoot('C:\\v\\Zasoby', CFG, exists([`C:\\v\\${CFG}`]))).toBe('C:\\v');
+  });
+
+  it('bez znacznika albo znacznik w katalogu domowym / na dysku → folder pliku', () => {
+    expect(findPageRoot('C:\\x\\y', CFG, exists([]))).toBe('C:\\x\\y');
+    expect(findPageRoot('C:\\x\\y', CFG, exists(['C:\\.git']))).toBe('C:\\x\\y');
+    const home = os.homedir();
+    expect(findPageRoot(path.join(home, 'Desktop'), CFG, exists([path.join(home, 'package.json')])))
+      .toBe(path.join(home, 'Desktop'));
+  });
+
+  it('isServable: w korzeniu tak, poza nim i sekrety nie', () => {
+    expect(isServable('C:\\proj', 'C:\\proj\\a\\b.css')).toBe(true);
+    expect(isServable('C:\\proj', 'C:\\PROJ\\a.css')).toBe(true);
+    expect(isServable('C:\\proj', 'C:\\proj2\\a.css')).toBe(false);
+    expect(isServable('C:\\proj', 'C:\\proj\\.claudian-plus\\telegram.json')).toBe(false);
+    expect(isServable('C:\\proj', 'C:\\proj\\x\\.credentials.json')).toBe(false);
+    expect(isServable('C:\\proj', 'C:\\proj\\.env.local')).toBe(false);
   });
 });

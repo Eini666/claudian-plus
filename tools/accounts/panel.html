@@ -222,7 +222,7 @@ function foot(a) {
   // zawczasu, żeby relogin zrobić spokojnie, a nie w chwili, gdy drugie konto ma limit.
   const dni = a.loginExpiresAt ? Math.floor((a.loginExpiresAt - Date.now()) / 864e5) : null;
   const login = !a.dead && dni !== null && dni < 5
-    ? `<a href="#" class="out" data-relogin="${a.name}" title="zaloguj ponownie teraz">logowanie wygasa ${dni <= 0 ? 'dziś' : 'za ' + dni + ' d'} · odnów</a>` : '';
+    ? `<a href="#" class="out" data-relogin="${esc(a.name)}" title="zaloguj ponownie teraz">logowanie wygasa ${dni <= 0 ? 'dziś' : 'za ' + dni + ' d'} · odnów</a>` : '';
   // przy wyczerpanym koncie „zapas 0%" tylko powtarza to, co krzyczy czerwony pasek
   const zapas = a.usage.error ? null : 100 - a.usage.session.pct;
   const wolne = zapas === null ? ''
@@ -234,9 +234,9 @@ function foot(a) {
 
 const card = (a) => `
   <div class="acc ${a.active ? 'active' : ''}">
-    <div class="head"><span class="nm">${a.name}</span>${a.active ? '<span class="tag">aktywne</span>' : ''}</div>
-    <div class="mail">${a.email} · ${a.plan}</div>
-    ${a.usage.error ? `<div class="err">${a.usage.error}</div>` : [
+    <div class="head"><span class="nm">${esc(a.name)}</span>${a.active ? '<span class="tag">aktywne</span>' : ''}</div>
+    <div class="mail">${esc(a.email)} · ${esc(a.plan)}</div>
+    ${a.usage.error ? `<div class="err">${esc(a.usage.error)}</div>` : [
       bar('Sesja 5h', a.usage.session),
       bar('Tydzień', a.usage.weekly),
       bar('Opus (7 dni)', a.usage.opus),
@@ -244,8 +244,8 @@ const card = (a) => `
     ].join('')}
     ${foot(a)}
     ${a.dead
-      ? `<button class="go" data-relogin="${a.name}">zaloguj ponownie</button>`
-      : `<button class="go" ${a.active ? 'disabled' : ''} data-name="${a.name}">${a.active ? 'w użyciu' : 'przełącz'}</button>`}
+      ? `<button class="go" data-relogin="${esc(a.name)}">zaloguj ponownie</button>`
+      : `<button class="go" ${a.active ? 'disabled' : ''} data-name="${esc(a.name)}">${a.active ? 'w użyciu' : 'przełącz'}</button>`}
   </div>`;
 
 let running = 0;
@@ -271,8 +271,8 @@ function sessRow(s) {
     ? `<span class="cost ${kl}" title="cały kontekst (${s.kontekst.toLocaleString('pl')} tok.) trafi do cache od nowa">${tokk(s.kosztWznowienia)}</span>`
     : `<span class="cost warm" title="cache prawdopodobnie jeszcze żyje — wznowienie kosztuje tyle, co zwykła tura">~${tokk(s.kosztTury)}</span>`;
   return `<div class="sess-row">
-    <span class="nm">${s.projekt}</span>
-    <span class="id">${s.id}</span>
+    <span class="nm">${esc(s.projekt)}</span>
+    <span class="id">${esc(s.id)}</span>
     ${koszt}
     <span class="ago">${temu(s.at)}</span>
   </div>`;
@@ -304,8 +304,8 @@ async function load() {
       return h < 48 ? ` <i>${h} h temu</i>` : ` <i>${Math.round(h / 24)} dni temu</i>`;
     };
     document.getElementById('models').innerHTML = [
-      m.session ? `sesje <b>${m.session}</b>${kiedy(m.sessionAt)}` : '',
-      m.job ? `SDK / -p <b>${m.job}</b>${kiedy(m.jobAt)}` : '',
+      m.session ? `sesje <b>${esc(m.session)}</b>${kiedy(m.sessionAt)}` : '',
+      m.job ? `SDK / -p <b>${esc(m.job)}</b>${kiedy(m.jobAt)}` : '',
     ].filter(Boolean).join('<span class="sep">|</span>')
       + (m.measured === false ? ' <i title="brak transkryptów — wartości z plików konfiguracyjnych">(deklaracja)</i>' : '');
     document.getElementById('grid').innerHTML = accounts.length ? accounts.map(card).join('')

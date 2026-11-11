@@ -96,17 +96,38 @@ describe('TelegramClient', () => {
     expect(api.ile('getUpdates')[1].body.offset).toBe('3');
   });
 
-  it('parowanie: pierwsza wiadomosc zapisuje chat id i wysyla „Połączono…”', async () => {
+  it('parowanie: wiadomosc z kodem zapisuje chat id i wysyla „Połączono…”', async () => {
     zapiszSekrety({ token: TOKEN, chatId: null }, home);
     const o = obsluga();
-    api.dostarcz([wiad(555, { text: '/start' })]);
+    const teraz = Math.floor(Date.now() / 1000);
+    api.dostarcz([wiad(555, { text: ' 482913 ', date: teraz })]);
     const k = nowy();
     k.start(o);
 
-    await expect(k.rozpocznijParowanie()).resolves.toBe('sparowano');
+    await expect(k.rozpocznijParowanie(120, '482913')).resolves.toBe('sparowano');
     expect(czytajSekrety(home)).toEqual({ token: TOKEN, chatId: 555 });
     expect(api.ile('sendMessage').map((w) => w.body)).toEqual([{ chat_id: '555', text: TEKST_PO_PAROWANIU }]);
     expect(o.obsluz).not.toHaveBeenCalled();
+  });
+
+  it('parowanie: zly kod i zalegla wiadomosc sprzed parowania nie paruja', async () => {
+    zapiszSekrety({ token: TOKEN, chatId: null }, home);
+    const o = obsluga();
+    const k = nowy();
+    k.start(o);
+    const wynik = k.rozpocznijParowanie(120, '482913');
+    const teraz = Math.floor(Date.now() / 1000);
+    api.dostarcz([
+      wiad(666, { text: '/start', date: teraz }, 1),
+      wiad(777, { text: '482913', date: teraz - 3600 }, 2),
+    ]);
+    await czekajNa(() => api.ile('getUpdates').length === 2);
+    expect(czytajSekrety(home)?.chatId).toBeNull();
+    expect(api.ile('sendMessage')).toHaveLength(0);
+
+    api.dostarcz([wiad(555, { text: '482913', date: teraz }, 3)]);
+    await expect(wynik).resolves.toBe('sparowano');
+    expect(czytajSekrety(home)?.chatId).toBe(555);
   });
 
   it('parowanie: po uplywie okna nieaktywne, wiadomosc z nowego czatu ignorowana', async () => {
@@ -115,7 +136,7 @@ describe('TelegramClient', () => {
     const o = obsluga();
     const k = nowy();
     k.start(o);
-    const wynik = k.rozpocznijParowanie(120);
+    const wynik = k.rozpocznijParowanie(120, '482913');
     await jest.advanceTimersByTimeAsync(120_000);
     await expect(wynik).resolves.toBe('czas-minal');
 
@@ -127,7 +148,7 @@ describe('TelegramClient', () => {
   });
 
   it('parowanie bez dzialajacego nasluchu: odrzucone', async () => {
-    await expect(nowy().rozpocznijParowanie()).rejects.toThrow('nie działa');
+    await expect(nowy().rozpocznijParowanie(120, '482913')).rejects.toThrow('nie działa');
   });
 
   it('tekst 9000 znakow: 3 x sendMessage, ciecie na granicy zdania', async () => {

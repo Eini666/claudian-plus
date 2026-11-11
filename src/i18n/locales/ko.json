@@ -591,7 +591,7 @@
         },
         "pair": {
           "name": "Connect phone",
-          "waiting": "Send any message to your bot now ({s} s left).",
+          "waiting": "Send the code {code} to your bot now ({s} s left).",
           "done": "Connected.",
           "paired": "Phone connected.",
           "unpaired": "Phone not connected.",

@@ -151,7 +151,18 @@ export function annotateVaultLinks(app: App, container: HTMLElement): void {
   });
 }
 
+// openExternal oddaje adres handlerowi systemu: `file:` uruchomilby `.bat`, obcy schemat — dowolna aplikacje.
+const SAFE_EXTERNAL_URL = /^(?:https?:\/\/|mailto:|obsidian:\/\/open\?)/i;
+
+export function isSafeExternalUrl(url: string): boolean {
+  return SAFE_EXTERNAL_URL.test(url.trim());
+}
+
 export function openUrl(url: string): void {
+  if (!isSafeExternalUrl(url)) {
+    new Notice(`Nie otwieram tego adresu z rozmowy: ${url}`);
+    return;
+  }
   const shell = electronShell();
   if (shell) void shell.openExternal(url);
   else window.open(url);
@@ -177,7 +188,7 @@ export async function openInBrowser(app: App, target: string): Promise<void> {
       new Notice(`Nie ma takiej ścieżki: ${local}`);
       return;
     }
-    url = await localPageUrl(local);
+    url = await localPageUrl(local, app.vault.configDir);
   }
   const webViewer = (app as unknown as { internalPlugins?: { getEnabledPluginById(id: string): unknown } })
     .internalPlugins?.getEnabledPluginById('webviewer');

@@ -243,7 +243,7 @@
         },
         "pair": {
           "name": "Połącz telefon",
-          "waiting": "Napisz teraz dowolną wiadomość do bota (pozostało {s} s).",
+          "waiting": "Wyślij teraz botowi kod {code} (pozostało {s} s).",
           "done": "Połączono.",
           "paired": "Telefon połączony.",
           "unpaired": "Telefon niepołączony.",

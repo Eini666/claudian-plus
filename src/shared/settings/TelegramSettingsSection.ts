@@ -29,7 +29,7 @@ export interface TelegramPanelPort {
   writeSecrets(secrets: TelegramSecrets): void;
   /** `restart` = zatrzymaj klienta przed startem, zeby wczytal nowy token. */
   startBridge(restart: boolean): 'dziala' | 'brak-tokenu' | 'zajete' | 'wylaczony';
-  startPairing(seconds: number): Promise<'sparowano' | 'czas-minal' | 'przerwano'>;
+  startPairing(seconds: number, code: string): Promise<'sparowano' | 'czas-minal' | 'przerwano'>;
   toolsState(): VoiceToolsState;
   toolSize(tool: string): number;
   install(tool: string, progress: (done: number, total: number) => void): Promise<unknown>;
@@ -134,14 +134,15 @@ export function renderTelegramSettingsSection(options: TelegramSettingsSectionOp
           busy = 'pairing';
           button.setDisabled(true);
           const end = Date.now() + PAIRING_SECONDS * 1000;
+          const code = String(crypto.getRandomValues(new Uint32Array(1))[0] % 1_000_000).padStart(6, '0');
           const tick = (): void => {
             const s = Math.max(0, Math.ceil((end - Date.now()) / 1000));
-            pairSetting.setDesc(t('settings.extras.telegram.pair.waiting', { s }));
+            pairSetting.setDesc(t('settings.extras.telegram.pair.waiting', { s, code }));
           };
           tick();
           const timer = window.setInterval(tick, 1000);
           try {
-            const result = await port.startPairing(PAIRING_SECONDS);
+            const result = await port.startPairing(PAIRING_SECONDS, code);
             if (result === 'sparowano') new Notice(t('settings.extras.telegram.pair.done'));
             else if (result === 'czas-minal') new Notice(t('settings.extras.telegram.pair.timeout'));
           } catch (err) {

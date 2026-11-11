@@ -231,7 +231,7 @@ describe('renderTelegramSettingsSection', () => {
 
     await pair.button!.click();
 
-    expect(port.startPairing).toHaveBeenCalledWith(120);
+    expect(port.startPairing).toHaveBeenCalledWith(120, expect.stringMatching(/^\d{6}$/));
     expect(mockNotice).toHaveBeenCalledWith(`${K}.pair.done`);
   });
 });

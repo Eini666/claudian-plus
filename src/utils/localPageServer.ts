@@ -5,13 +5,15 @@
  * to sciezka na dysku, wiec wzgledne odwolania strony (`../font/x.ttf`) dzialaja bez zmian.
  *
  * Granice: tylko 127.0.0.1, tylko GET/HEAD, tylko istniejace pliki (bez listingu katalogow),
- * losowy klucz na kazde uruchomienie wtyczki — obca strona w przegladarce nie zgadnie adresu.
+ * losowy klucz per projekt strony ([findPageRoot]) — skrypt strony zna swoj klucz z adresu,
+ * wiec klucz otwiera tylko jej projekt, bez katalogow i plikow z sekretami ([isServable]).
  */
 
 import { randomBytes } from 'crypto';
 import * as fs from 'fs';
 import * as http from 'http';
 import type { AddressInfo } from 'net';
+import * as os from 'os';
 import * as path from 'path';
 
 const MIME: Record<string, string> = {
@@ -55,21 +57,72 @@ export function fileUrlToPath(url: string): string | null {
   }
 }
 
+/**
+ * Granica plikow, ktore strona moze pobrac: najblizszy folder projektu (`.git`, `package.json`,
+ * folder konfiguracji vaulta), zeby `../font/x.ttf` dzialal. Znacznik w katalogu domowym albo
+ * na dysku nie liczy sie — wtedy sam folder pliku, inaczej klucz otwieralby caly dom z `~/.claude`.
+ */
+export function findPageRoot(
+  dir: string,
+  vaultConfigDir: string,
+  exists: (p: string) => boolean = fs.existsSync,
+): string {
+  const markers = ['.git', 'package.json', vaultConfigDir];
+  const start = path.win32.normalize(dir);
+  const home = path.win32.normalize(os.homedir()).toLowerCase();
+  for (let cur = start; ; cur = path.win32.dirname(cur)) {
+    const parent = path.win32.dirname(cur);
+    if (parent === cur || cur.toLowerCase() === home) return start;
+    if (markers.some(m => exists(path.win32.join(cur, m)))) return cur;
+  }
+}
+
+const DENIED_DIRS = new Set(['.ssh', '.gnupg', '.aws', '.claudian-plus', 'appdata']);
+const DENIED_FILE = /^(?:\.env(?:\..*)?|\.credentials\.json|\.claude\.json|id_[a-z0-9]+)$/i;
+
+/** Plik w korzeniu i poza katalogami/plikami z sekretami (sprawdzane ponizej korzenia). */
+export function isServable(root: string, file: string): boolean {
+  const rel = path.win32.relative(root, file);
+  if (!rel || rel.startsWith('..') || path.win32.isAbsolute(rel)) return false;
+  const parts = rel.split('\\');
+  if (DENIED_FILE.test(parts[parts.length - 1])) return false;
+  return !parts.slice(0, -1).some(p => DENIED_DIRS.has(p.toLowerCase()));
+}
+
 let server: http.Server | null = null;
 let base: Promise<string> | null = null;
-const token = randomBytes(12).toString('hex');
+// klucz → korzen; jeden klucz na projekt, wiec strona z jednego projektu nie czyta drugiego
+const roots = new Map<string, string>();
+
+function tokenForRoot(root: string): string {
+  for (const [token, r] of roots) if (r.toLowerCase() === root.toLowerCase()) return token;
+  const token = randomBytes(12).toString('hex');
+  roots.set(token, root);
+  return token;
+}
+
+function resolveRequest(urlPath: string): string | null {
+  const token = urlPath.split('/')[1] ?? '';
+  const root = roots.get(token);
+  const file = root ? fileForPagePath(token, urlPath) : null;
+  return root && file && isServable(root, file) ? file : null;
+}
 
 function start(): Promise<string> {
   return new Promise((resolve, reject) => {
     const srv = http.createServer((req, res) => {
-      const file = req.method === 'GET' || req.method === 'HEAD' ? fileForPagePath(token, req.url ?? '') : null;
+      const file = req.method === 'GET' || req.method === 'HEAD' ? resolveRequest(req.url ?? '') : null;
       if (!file || !fs.existsSync(file) || !fs.statSync(file).isFile()) {
         res.writeHead(404).end();
         return;
       }
       const ext = path.win32.extname(file).slice(1).toLowerCase();
       // no-store: po poprawce makiety przeladowanie ma pokazac nowa wersje, nie cache
-      res.writeHead(200, { 'Content-Type': MIME[ext] ?? 'application/octet-stream', 'Cache-Control': 'no-store' });
+      res.writeHead(200, {
+        'Content-Type': MIME[ext] ?? 'application/octet-stream',
+        'Cache-Control': 'no-store',
+        'X-Content-Type-Options': 'nosniff',
+      });
       if (req.method === 'HEAD') res.end();
       else fs.createReadStream(file).on('error', () => res.destroy()).pipe(res);
     });
@@ -82,16 +135,17 @@ function start(): Promise<string> {
 }
 
 /** Adres http lokalnego pliku; serwer wstaje przy pierwszym uzyciu. */
-export async function localPageUrl(absPath: string): Promise<string> {
+export async function localPageUrl(absPath: string, vaultConfigDir: string): Promise<string> {
   base ??= start().catch((err: unknown) => {
     base = null;
     throw err;
   });
-  return (await base) + pagePathFor(token, absPath);
+  return (await base) + pagePathFor(tokenForRoot(findPageRoot(path.win32.dirname(absPath), vaultConfigDir)), absPath);
 }
 
 export function stopLocalPageServer(): void {
   server?.close();
   server = null;
   base = null;
+  roots.clear();
 }

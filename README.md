@@ -58,7 +58,7 @@ outside the plugin folder.
 2. In Obsidian: *Settings → Claudian Plus → Extras → Telegram bridge*. Enable the bridge and choose
    the **"Built-in bot"** mode.
 3. Paste the token into **"Bot token"**.
-4. Click **"Connect phone"** and send any message to your bot within 120 s.
+4. Click **"Connect phone"** and send your bot the 6-digit code shown in settings within 120 s.
 5. **"Voice tools"** — click **"Install"** for each missing tool: Piper (~21 MB), the voice selected
    in "Voice" (~60 MB), ffmpeg (~110 MB).
 6. **"Send a test voice message"** — a voice message should arrive on your phone.

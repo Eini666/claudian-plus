@@ -100,6 +100,7 @@ export class TelegramClient {
   private odnowa: number | null = null;
   private offset = 0;
   private parowanie: ((wynik: WynikParowania) => void) | null = null;
+  private parowanieOd: { kod: string; od: number } | null = null;
 
   constructor(opcje: OpcjeKlienta = {}) {
     this.home = opcje.home;
@@ -131,10 +132,16 @@ export class TelegramClient {
     if (this.czytajBlokade()?.wlasciciel === this.wlasciciel) fs.rmSync(plikBlokadyMostu(this.home), { force: true });
   }
 
-  /** Pierwsza prywatna wiadomosc w oknie zostaje sparowanym czatem. Wymaga dzialajacego `start()`. */
-  rozpocznijParowanie(sekundy = 120): Promise<WynikParowania> {
+  /**
+   * Sparowanym czatem zostaje pierwsza prywatna wiadomosc z `kod` (pokazanym w ustawieniach),
+   * wyslana po starcie parowania. Bez kodu bota przejmowal ktokolwiek pierwszy napisal — takze
+   * zalegla wiadomosc sprzed klikniecia. Wymaga dzialajacego `start()`.
+   */
+  rozpocznijParowanie(sekundy: number, kod: string): Promise<WynikParowania> {
     if (!this.stop$) return Promise.reject(new Error('Nasłuch Telegrama nie działa'));
     this.parowanie?.('przerwano');
+    // margines 5 s na roznice zegarow z serwerem Telegrama
+    this.parowanieOd = { kod, od: Math.floor(Date.now() / 1000) - 5 };
     return new Promise((resolve) => {
       const zegar = window.setTimeout(() => zakoncz('czas-minal'), sekundy * 1000);
       const zakoncz = (wynik: WynikParowania) => {
@@ -196,7 +203,9 @@ export class TelegramClient {
   private async przetworz(w: Wiadomosc, obsluga: ObslugaTelegrama): Promise<void> {
     const sekrety = this.wymagajSekretow();
     try {
-      if (this.parowanie && w.chat.type === 'private') {
+      const p = this.parowanieOd;
+      if (this.parowanie && p && w.chat.type === 'private'
+        && w.text?.trim() === p.kod && (w.date ?? 0) >= p.od) {
         zapiszSekrety({ token: sekrety.token, chatId: w.chat.id }, this.home);
         sekrety.chatId = w.chat.id;
         await this.wyslijTekst(TEKST_PO_PAROWANIU, w.chat.id);

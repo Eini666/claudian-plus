@@ -57,7 +57,7 @@ Wyłącz jedną, zanim włączysz drugą — rozmowy i ustawienia przejdą, bo l
 2. W Obsidianie: *Ustawienia → Claudian Plus → Dodatki → Most Telegrama*. Włącz most i wybierz
    tryb **„Wbudowany bot”**.
 3. Wklej token w polu **„Token bota”**.
-4. Kliknij **„Połącz telefon”** i w ciągu 120 s napisz dowolną wiadomość do swojego bota.
+4. Kliknij **„Połącz telefon”** i w ciągu 120 s wyślij swojemu botowi 6-cyfrowy kod pokazany w ustawieniach.
 5. **„Narzędzia głosu”** — przy każdym brakującym narzędziu kliknij **„Zainstaluj”**: Piper
    (~21 MB), głos wybrany w polu „Głos” (~60 MB), ffmpeg (~110 MB).
 6. **„Wyślij głosówkę testową”** — na telefonie powinna przyjść głosówka.

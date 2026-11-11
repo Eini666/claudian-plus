@@ -70,8 +70,33 @@ async function readJson<T>(filePath: string): Promise<T | null> {
   }
 }
 
+/**
+ * Odczyt pod zapis: tylko brak pliku daje `{}`. Uszkodzony JSON albo błąd odczytu przerywa —
+ * inaczej zapis zastąpiłby cały plik (hooki, permissions, env) jednym kluczem.
+ */
+async function readJsonForWrite<T extends object>(filePath: string): Promise<T> {
+  let raw: string;
+  try {
+    raw = await fs.readFile(filePath, 'utf-8');
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') return {} as T;
+    throw error;
+  }
+  try {
+    return JSON.parse(raw) as T;
+  } catch {
+    throw new Error(`Nie zapisuję: ${filePath} nie jest poprawnym JSON-em`);
+  }
+}
+
+const backedUp = new Set<string>();
+
 async function writeJsonAtomic(filePath: string, value: unknown): Promise<void> {
-  const tempPath = `${filePath}.claudian-tmp`;
+  if (!backedUp.has(filePath)) {
+    await fs.copyFile(filePath, `${filePath}.claudian-bak`).catch(() => undefined);
+    backedUp.add(filePath);
+  }
+  const tempPath = `${filePath}.claudian-tmp-${process.pid}-${Date.now()}`;
   await fs.writeFile(tempPath, `${JSON.stringify(value, null, 2)}\n`, 'utf-8');
   await fs.rename(tempPath, filePath);
 }
@@ -187,7 +212,7 @@ async function mutateSettings(
   filePath: string,
   mutate: (settings: SettingsFile) => void,
 ): Promise<void> {
-  const settings = (await readJson<SettingsFile>(filePath)) ?? {};
+  const settings = await readJsonForWrite<SettingsFile>(filePath);
   mutate(settings);
   await fs.mkdir(path.dirname(filePath), { recursive: true });
   await writeJsonAtomic(filePath, settings);
@@ -243,7 +268,7 @@ export async function setMcpServerEnabled(
   }
 
   const filePath = claudeJsonPath(state.configDir);
-  const claudeJson = (await readJson<ClaudeJsonFile>(filePath)) ?? {};
+  const claudeJson = await readJsonForWrite<ClaudeJsonFile>(filePath);
   const active = { ...(claudeJson.mcpServers ?? {}) };
   const parked = { ...(claudeJson.mcpServersDisabled ?? {}) };
 

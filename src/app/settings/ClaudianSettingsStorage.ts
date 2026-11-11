@@ -2,10 +2,6 @@ import {
   CLAUDIAN_SETTINGS_PATH,
   LEGACY_CLAUDIAN_SETTINGS_PATH,
 } from '../../core/bootstrap/storagePaths';
-import {
-  DEFAULT_COLLAB_PROJECTS_FOLDER,
-  parseCollabProjectsFolder,
-} from '../../core/collab/CollabProjectsFolder';
 import { normalizeLinkedContentPath } from '../../core/path/LinkedContentPath';
 import {
   normalizeHiddenCommandList,
@@ -54,6 +50,10 @@ const LEGACY_STRIPPED_SHARED_SETTING_FIELDS = [
   'openInMainTab',
   'pinnedLinkedNotePaths',
   'enableFilePane',
+  // Collab usuniety (11.11.2026, jak upstream #1421) — pola znikaja przy najblizszym zapisie.
+  'collabEnabled',
+  'collabProjectsFolder',
+  'collabGitPath',
 ] as const;
 
 function getProviderSettingsAdapters() {
@@ -128,17 +128,6 @@ function normalizeRestoreTabsOnStartup(value: unknown): boolean {
     : DEFAULT_CLAUDIAN_SETTINGS.restoreTabsOnStartup;
 }
 
-function normalizeCollabGitPath(value: unknown): string {
-  if (typeof value !== 'string') return DEFAULT_CLAUDIAN_SETTINGS.collabGitPath;
-  const trimmed = value.trim();
-  return trimmed.length <= 4_096
-    && !trimmed.includes('\u0000')
-    && !trimmed.includes('\r')
-    && !trimmed.includes('\n')
-    ? trimmed
-    : DEFAULT_CLAUDIAN_SETTINGS.collabGitPath;
-}
-
 /**
  * Ustawienia sprzed etapu 2 nie maja trybu: niepusty folder mostu znaczyl zewnetrzny program
  * (JARVIS), wiec zostaje `external`. Patrzy na surowe dane — spread domyslnych dalby `builtin`.
@@ -148,12 +137,6 @@ function normalizeTelegramBridgeMode(stored: Record<string, unknown>): TelegramB
   if (mode === 'builtin' || mode === 'external') return mode;
   const dir = stored.telegramBridgeDir;
   return typeof dir === 'string' && dir.trim() ? 'external' : 'builtin';
-}
-
-function normalizeCollabEnabled(value: unknown): boolean {
-  return typeof value === 'boolean'
-    ? value
-    : DEFAULT_CLAUDIAN_SETTINGS.collabEnabled;
 }
 
 function normalizeSessionManagerOrganization(
@@ -177,12 +160,6 @@ function normalizePinnedLinkedContentPaths(value: unknown): string[] {
     normalizedPaths.push(path);
   }
   return normalizedPaths;
-}
-
-function normalizeCollabProjectsFolder(value: unknown): string {
-  if (typeof value !== 'string') return DEFAULT_COLLAB_PROJECTS_FOLDER;
-  const parsed = parseCollabProjectsFolder(value);
-  return parsed.ok ? parsed.value : DEFAULT_COLLAB_PROJECTS_FOLDER;
 }
 
 function shouldPersistChatViewNormalization(
@@ -499,9 +476,6 @@ export class ClaudianSettingsStorage {
     const restoreTabsOnStartup = normalizeRestoreTabsOnStartup(
       stored.restoreTabsOnStartup,
     );
-    const collabEnabled = normalizeCollabEnabled(stored.collabEnabled);
-    const collabProjectsFolder = normalizeCollabProjectsFolder(stored.collabProjectsFolder);
-    const collabGitPath = normalizeCollabGitPath(stored.collabGitPath);
     const hasCanonicalPinnedPaths = Object.prototype.hasOwnProperty.call(
       stored,
       'pinnedLinkedContentPaths',
@@ -534,9 +508,6 @@ export class ClaudianSettingsStorage {
       enableDualPane,
       dualPaneSide,
       restoreTabsOnStartup,
-      collabEnabled,
-      collabProjectsFolder,
-      collabGitPath,
       telegramBridgeMode: normalizeTelegramBridgeMode(stored),
       sessionManagerOrganization,
       pinnedLinkedContentPaths,
@@ -578,18 +549,6 @@ export class ClaudianSettingsStorage {
         enableDualPane,
         dualPaneSide,
         restoreTabsOnStartup,
-      )
-      || (
-        'collabEnabled' in stored
-        && stored.collabEnabled !== collabEnabled
-      )
-      || (
-        'collabProjectsFolder' in stored
-        && stored.collabProjectsFolder !== collabProjectsFolder
-      )
-      || (
-        'collabGitPath' in stored
-        && stored.collabGitPath !== collabGitPath
       )
       || (
         'sessionManagerOrganization' in stored

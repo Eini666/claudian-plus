@@ -14,6 +14,7 @@ export class Plugin {
   addSettingTab = jest.fn();
   registerView = jest.fn();
   registerEvent = jest.fn();
+  registerMarkdownCodeBlockProcessor = jest.fn();
   loadData = jest.fn().mockResolvedValue({});
   saveData = jest.fn().mockResolvedValue(undefined);
 

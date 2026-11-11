@@ -10,7 +10,7 @@
  */
 
 import type { App } from 'obsidian';
-import { setIcon } from 'obsidian';
+import { Notice, setIcon } from 'obsidian';
 
 import { t } from '../../../i18n/i18n';
 import { getVaultPath } from '../../../utils/path';
@@ -201,8 +201,9 @@ export class EnvironmentSelector {
         .then(() => {
           item.enabled = enabled;
         })
-        .catch(() => {
+        .catch((error: unknown) => {
           checkbox.checked = item.enabled;
+          new Notice(error instanceof Error ? error.message : String(error));
         })
         .finally(() => {
           checkbox.disabled = false;
@@ -226,8 +227,9 @@ export class EnvironmentSelector {
         .then(() => {
           state.outputStyle = value;
         })
-        .catch(() => {
+        .catch((error: unknown) => {
           select.value = state.outputStyle ?? '';
+          new Notice(error instanceof Error ? error.message : String(error));
         })
         .finally(() => {
           select.disabled = false;
