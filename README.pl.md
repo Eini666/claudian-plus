@@ -9,6 +9,16 @@ Rdzeń, architektura i większość kodu to praca autora oryginału. Claudian Pl
 która przydaje się przy codziennej pracy z Claude Code po polsku. Opis oryginalnej wtyczki:
 [`README-upstream.md`](README-upstream.md). Baza: Claudian `2.2.6`.
 
+> **Tak, jak jest.** To prywatny fork udostępniony grzecznościowo. Używam go codziennie na Windows,
+> ale nie ma wsparcia ani harmonogramu wydań. Zgłoszenia i pomysły mile widziane; poprawek nie obiecuję.
+
+## Czym różni się od oryginału
+
+- Bazą jest Claudian `2.2.6` — nowszych zmian upstreamu tu nie ma, poza funkcjami przeniesionymi
+  ręcznie (są w liście zmian).
+- **Nie ma trybu Collab.** Upstream przeniósł go do osobnej wtyczki; Claudian Plus go nie zawiera.
+- Prompt systemowy to pełny preset Claude Code zamiast własnego promptu wtyczki (niżej).
+
 ## Co dodaje
 
 - **Pełny preset Claude Code** — wtyczka ładuje `CLAUDE.md` (globalny i projektowy), reguły
@@ -192,6 +202,36 @@ Register-ScheduledTask -TaskName 'Konta Claude Code' -Action $action -Trigger $t
 - Wygasły token zwraca błąd `429`, nie `401` — jeśli panel pisze „token wygasł”, zaloguj konto ponownie.
 - Endpoint limitów ma ostry rate limit. Panel trzyma odczyty w pamięci podręcznej i pyta tylko wtedy,
   gdy jest widoczny.
+
+## Bezpieczeństwo
+
+- Linki w odpowiedziach agenta otwierają tylko `http(s)`, `mailto:` i `obsidian://open`; linki `file:`
+  i schematy innych aplikacji są blokowane, zamiast trafiać do systemu.
+- Strona lokalna otwarta we wbudowanej przeglądarce wczytuje pliki tylko z własnego folderu projektu
+  (najbliższy folder z `.git`, `package.json` albo vaultem); `.env`, `.ssh`, pliki z poświadczeniami
+  i folder danych Claudian Plus nie są nigdy udostępniane.
+- Bot Telegrama paruje się tylko jednorazowym 6-cyfrowym kodem z ustawień; wiadomości wysłane przed
+  rozpoczęciem parowania są pomijane.
+- Panel „Środowisko” nie nadpisuje pliku `settings.json` Claude Code, którego nie umie odczytać;
+  przed pierwszą zmianą w sesji zostawia kopię `.claudian-bak`.
+
+## Lista zmian
+
+Od `1.0.0` Claudian Plus ma własne numery wersji. Wcześniejsze wydania miały numery `2.2.6-plus.N`.
+
+**1.0.0** (2026-11-11) — ten sam kod co `2.2.6-plus.10`, z nowym numerem: poprawki bezpieczeństwa
+opisane wyżej, nowsze `zod` i `@modelcontextprotocol/sdk`, usunięty Collab (`main.js` 5,7 → 3,4 MB).
+
+Przed 1.0:
+- `plus.9` — czytanie innych rozmów (`list_sessions`, `read_session`) i wzmianki `@` o rozmowach
+- `plus.8` — projekty na liście sesji
+- `plus.7` — panel modelu i myślenia
+- `plus.6` — zwijanie przerwanych tur
+- `plus.5` — menu trybów uprawnień (Auto / Ręczny / Akceptuj edycje / YOLO / Plan)
+- `plus.4` — pasek limitów od razu pokazuje wyczerpanie, karta „wznowię o”
+- `plus.3` — zadania w tle przeżywają pulę procesów
+- `plus.2` — przełącznik kont w paczce
+- `plus.1` — pierwsze wydanie: ustawienia „Dodatki”, Telegram z głosówkami, lokalna transkrypcja
 
 ## Wymagania
 

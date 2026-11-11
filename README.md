@@ -9,6 +9,16 @@ The core, the architecture and most of the code are the original author's work. 
 a layer that helps in day-to-day work with Claude Code. Original plugin description:
 [`README-upstream.md`](README-upstream.md). Base: Claudian `2.2.6`.
 
+> **As-is.** This is a private fork shared as a courtesy. It is used daily on Windows, but there is
+> no support and no release schedule. Issues and suggestions are welcome; fixes are not promised.
+
+## Differences from the original
+
+- Based on Claudian `2.2.6` — newer upstream changes are not included, except features ported by hand
+  (listed in the changelog).
+- **Collab mode is removed.** Upstream moved it to a separate plugin; Claudian Plus does not ship it.
+- The system prompt is Claude Code's full preset instead of the plugin's own (see below).
+
 ## What it adds
 
 - **Full Claude Code preset** — the plugin loads `CLAUDE.md` (global and project), rules from
@@ -199,6 +209,37 @@ Register-ScheduledTask -TaskName 'Claude Code accounts' -Action $action -Trigger
 - The panel UI is in Polish only.
 - An expired token returns `429`, not `401` — if the panel says the token expired, log the account in again.
 - The usage endpoint is strictly rate-limited; the panel caches readings and only asks while it is visible.
+
+## Security
+
+- Links in the agent's replies open only `http(s)`, `mailto:` and `obsidian://open`; `file:` links and
+  other app schemes are blocked instead of being handed to the system.
+- A local page opened in the built-in browser can load files only from its own project folder
+  (nearest folder with `.git`, `package.json` or a vault); `.env`, `.ssh`, credential files and the
+  Claudian Plus data folder are never served.
+- The Telegram bot pairs only with a one-time 6-digit code shown in settings; messages sent before
+  pairing started are ignored.
+- The "Environment" panel never overwrites a Claude Code `settings.json` it cannot read; it keeps a
+  `.claudian-bak` copy before the first change in a session.
+
+## Changelog
+
+Claudian Plus has its own version numbers since `1.0.0`. Earlier releases were numbered `2.2.6-plus.N`.
+
+**1.0.0** (2026-11-11) — the same code as `2.2.6-plus.10`, renumbered:
+security fixes listed above, updated `zod` and `@modelcontextprotocol/sdk`, Collab removed
+(`main.js` 5.7 → 3.4 MB).
+
+Before 1.0:
+- `plus.9` — reading other conversations (`list_sessions`, `read_session`) and `@` mentions of conversations
+- `plus.8` — projects in the session list
+- `plus.7` — model and thinking panel
+- `plus.6` — collapsing interrupted turns
+- `plus.5` — permission mode menu (Auto / Manual / Accept edits / YOLO / Plan)
+- `plus.4` — plan limit bar shows the limit right away, "resume at" card
+- `plus.3` — background tasks survive the process pool
+- `plus.2` — account switcher in the package
+- `plus.1` — first release: Extras settings, Telegram with voice messages, local transcription
 
 ## Requirements
 
